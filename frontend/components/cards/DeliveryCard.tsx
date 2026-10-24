@@ -87,7 +87,8 @@ export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
 
         {delivery.perishable_warning && (
           <p className="rounded-lg bg-sun/20 px-3 py-2 text-xs text-ink">
-            {delivery.perishable_warning}
+            {/* Kapruka's warning is English-only and always means the same, so show ours. */}
+            {t.freshWarning}
           </p>
         )}
       </div>

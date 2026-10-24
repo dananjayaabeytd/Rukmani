@@ -87,6 +87,7 @@ export interface Strings {
   canGoTo: string;
   andMore: string;
   pickDate: string;
+  freshWarning: string;
   // cart
   yourCart: string;
   cartEmpty: string;
@@ -182,6 +183,7 @@ const en: Strings = {
   canGoTo: "It can go to:",
   andMore: " and more",
   pickDate: "Pick a delivery date",
+  freshWarning: "This is a fresh item — it's best delivered on the day itself or the day after.",
   yourCart: "Your cart",
   cartEmpty: "Your cart is empty.",
   drawerEmpty: "Nothing here yet. Ask Rukmani for gift ideas!",
@@ -273,6 +275,7 @@ const si: Strings = {
   canGoTo: "යැවිය හැකි නගර:",
   andMore: " සහ තවත්",
   pickDate: "බෙදාහැරීමේ දිනයක් තෝරන්න",
+  freshWarning: "මේක නැවුම් භාණ්ඩයක් — එදිනම හෝ ඊළඟ දවසේ යවන එක හොඳම යි.",
   yourCart: "ඔබේ කරත්තය",
   cartEmpty: "ඔබේ කරත්තය හිස්.",
   drawerEmpty: "තවම මොකුත් නැහැ. තෑගි අදහස් රුක්මණීගෙන් අහන්න!",
@@ -365,6 +368,7 @@ const ta: Strings = {
   canGoTo: "அனுப்பக்கூடிய இடங்கள்:",
   andMore: " மற்றும் பல",
   pickDate: "டெலிவரி நாளைத் தேர்வுசெய்க",
+  freshWarning: "இது புதிய பொருள் — அன்றே அல்லது மறுநாள் டெலிவரி செய்வது சிறந்தது.",
   yourCart: "உங்கள் கூடை",
   cartEmpty: "உங்கள் கூடை காலியாக உள்ளது.",
   drawerEmpty: "இன்னும் எதுவும் இல்லை. பரிசு யோசனைகளை ருக்மணியிடம் கேளுங்கள்!",
