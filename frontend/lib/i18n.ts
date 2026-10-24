@@ -60,6 +60,10 @@ export interface Strings {
   welcomeLanguages: string;
   welcomeIntro: string;
   suggestions: string[];
+  occasionSoon: (name: string, days: number) => string;
+  occasionToday: (name: string) => string;
+  occasionCta: (name: string) => string;
+  occasionMessage: (name: string) => string;
   placeholder: string;
   messageLabel: string;
   send: string;
@@ -139,6 +143,10 @@ const en: Strings = {
     "Can you deliver a chocolate hamper to Kandy tomorrow?",
     "A get-well-soon gift under LKR 5,000",
   ],
+  occasionSoon: (name, d) => `${name} is in ${d} day${d === 1 ? "" : "s"}`,
+  occasionToday: (name) => `${name} is today!`,
+  occasionCta: (name) => `Find a ${name} gift`,
+  occasionMessage: (name) => `Help me find a ${name} gift`,
   placeholder: "Ask in Sinhala, Tamil or English…",
   messageLabel: "Message Rukmani",
   send: "Send",
@@ -222,6 +230,10 @@ const si: Strings = {
     "Kandy walata heta chocolate hamper ekak yawanna puluwanda?",
     "ඉක්මනින් සුව වේවා කියලා දෙන්න රු. 5,000 ට අඩු තෑග්ගක්",
   ],
+  occasionSoon: (name, d) => `${name}ට තව දින ${d}යි`,
+  occasionToday: (name) => `අද ${name}!`,
+  occasionCta: (name) => `${name} තෑග්ගක් හොයමු`,
+  occasionMessage: (name) => `${name} තෑග්ගක් හොයන්න උදව් කරන්න`,
   placeholder: "සිංහල, Singlish, தமிழ் හෝ English වලින් අහන්න…",
   messageLabel: "රුක්මණීට පණිවිඩයක්",
   send: "යවන්න",
@@ -307,6 +319,10 @@ const ta: Strings = {
     "நாளை கண்டிக்கு chocolate hamper அனுப்ப முடியுமா?",
     "Valentine's day ku wife ku roses anupanum",
   ],
+  occasionSoon: (name, d) => `${name}க்கு இன்னும் ${d} நாட்கள்`,
+  occasionToday: (name) => `இன்று ${name}!`,
+  occasionCta: (name) => `${name} பரிசு தேடலாம்`,
+  occasionMessage: (name) => `${name} பரிசு தேட உதவுங்கள்`,
   placeholder: "தமிழ், Tanglish, සිංහල அல்லது English-ல் கேளுங்கள்…",
   messageLabel: "ருக்மணிக்கு செய்தி",
   send: "அனுப்பு",

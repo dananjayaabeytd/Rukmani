@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { useLanguage } from "@/components/LanguageProvider";
+import { OccasionBanner } from "./OccasionBanner";
 import { RukmaniAvatar } from "./RukmaniAvatar";
 
 interface WelcomeProps {
@@ -24,7 +25,9 @@ export function Welcome({ onPick }: WelcomeProps) {
       <p className="mt-2 text-base text-brand-light">{t.welcomeLanguages}</p>
       <p className="mt-4 max-w-md text-ink-soft">{t.welcomeIntro}</p>
 
-      <div className="mt-8 grid w-full gap-3 sm:grid-cols-2">
+      <OccasionBanner onPick={onPick} />
+
+      <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
         {t.suggestions.map((suggestion) => (
           <button
             key={suggestion}
