@@ -1,24 +1,33 @@
 "use client";
 
 import Image from "next/image";
-import { RotateCcw, ShoppingBag } from "lucide-react";
+import { Menu, ShoppingBag } from "lucide-react";
 import { LANGUAGES } from "@/lib/i18n";
 import { useLanguage } from "@/components/LanguageProvider";
 
 interface HeaderProps {
-  onNewChat: () => void;
-  canReset: boolean;
+  /** Phones: open the chat list (on desktop it's always visible). */
+  onOpenChats: () => void;
   cartCount: number;
   onOpenCart: () => void;
 }
 
-/** Kapruka-purple top bar: logo, Rukmani's name, language switch, cart and "New chat". */
-export function Header({ onNewChat, canReset, cartCount, onOpenCart }: HeaderProps) {
+/** Kapruka-purple top bar: chat-list button (phones), logo, Rukmani's name, language and cart. */
+export function Header({ onOpenChats, cartCount, onOpenCart }: HeaderProps) {
   const { lang, setLang, t } = useLanguage();
 
   return (
     <header className="bg-brand-logo text-white shadow-md">
       <div className="mx-auto flex h-16 max-w-4xl items-center gap-2 px-3 sm:gap-3 sm:px-4">
+        <button
+          type="button"
+          onClick={onOpenChats}
+          aria-label={t.openChats}
+          className="-ml-1 rounded-full p-2 transition hover:bg-white/10 md:hidden"
+        >
+          <Menu className="size-5" aria-hidden />
+        </button>
+
         {/* The logo file has its own purple background; the bar uses the same colour. */}
         <Image
           src="/kapruka-logo.webp"
@@ -64,18 +73,6 @@ export function Header({ onNewChat, canReset, cartCount, onOpenCart }: HeaderPro
                 {cartCount}
               </span>
             )}
-          </button>
-
-          <button
-            type="button"
-            onClick={onNewChat}
-            disabled={!canReset}
-            aria-label={t.newChat}
-            className="flex items-center gap-1.5 rounded-full border border-white/30 p-2 text-sm transition hover:bg-white/10 disabled:hidden sm:px-3 sm:py-1.5"
-          >
-            <RotateCcw className="size-4" aria-hidden />
-            {/* Icon only on phones, to keep the bar on one line. */}
-            <span className="hidden whitespace-nowrap md:inline">{t.newChat}</span>
           </button>
         </div>
       </div>

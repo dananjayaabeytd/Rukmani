@@ -139,6 +139,27 @@ export type StreamEvent =
   | { type: "done" }
   | { type: "error"; message: string };
 
+// ── Chats and memory (backend/src/kapruka_agent/api/schemas.py) ──────
+
+export interface ChatSummary {
+  id: string;
+  title: string;
+  updated_at: string; // ISO 8601
+}
+
+export interface ChatHistory {
+  id: string;
+  title: string;
+  summary: string | null; // older messages, condensed, when the chat was long
+  messages: ChatMessage[];
+}
+
+export interface RememberedFact {
+  id: string;
+  text: string;
+  category: "recipient" | "occasion" | "preference" | "customer" | "other";
+}
+
 // ── Chat messages as the UI keeps them ───────────────────────────────
 
 export interface ChatMessage {

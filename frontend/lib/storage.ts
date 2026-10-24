@@ -1,42 +1,48 @@
 /**
- * Keeps the current conversation in the browser, so a page refresh shows
- * the same chat. The backend has the real conversation (by thread id);
- * this is only what the screen shows.
+ * The two small things this browser remembers:
  *
- * Browser storage can be unavailable (private mode, blocked cookies), so
- * every access is wrapped: if it fails, the chat simply starts fresh.
+ *   visitor id   a private random id that owns this browser's chats and
+ *                memories on the server (there's no sign-in)
+ *   current chat which chat to reopen after a page refresh
+ *
+ * Conversations themselves live on the server. Browser storage can be
+ * blocked (private mode), so every access is wrapped: the visitor id then
+ * lasts for this visit only.
  */
 
-import type { ChatMessage } from "./types";
+const VISITOR_KEY = "rukmani:visitor";
+const CURRENT_CHAT_KEY = "rukmani:current-chat";
 
-const CHAT_KEY = "rukmani:chat";
+let visitorForThisVisit: string | null = null;
 
-interface SavedChat {
-  threadId: string;
-  messages: ChatMessage[];
-}
-
-export function loadChat(): SavedChat | null {
+function read(key: string): string | null {
   try {
-    const raw = localStorage.getItem(CHAT_KEY);
-    return raw ? (JSON.parse(raw) as SavedChat) : null;
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 }
 
-export function saveChat(chat: SavedChat): void {
+function write(key: string, value: string | null): void {
   try {
-    localStorage.setItem(CHAT_KEY, JSON.stringify(chat));
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
   } catch {
-    // Storage full or blocked — not worth interrupting the customer for.
+    // Storage blocked — fine, it just won't be remembered.
   }
 }
 
-export function clearChat(): void {
-  try {
-    localStorage.removeItem(CHAT_KEY);
-  } catch {
-    // Same as above.
-  }
+/** This browser's private visitor id, created on first use. */
+export function getVisitorId(): string {
+  visitorForThisVisit ??= read(VISITOR_KEY) ?? `v-${crypto.randomUUID()}`;
+  write(VISITOR_KEY, visitorForThisVisit);
+  return visitorForThisVisit;
+}
+
+export function loadCurrentChatId(): string | null {
+  return read(CURRENT_CHAT_KEY);
+}
+
+export function saveCurrentChatId(chatId: string | null): void {
+  write(CURRENT_CHAT_KEY, chatId);
 }

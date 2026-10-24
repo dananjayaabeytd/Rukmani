@@ -55,6 +55,25 @@ export interface Strings {
   name: string;
   tagline: string;
   newChat: string;
+  yourChats: string;
+  noChats: string;
+  openChats: string;
+  closeChats: string;
+  renameChat: string;
+  deleteChat: string;
+  confirmDelete: string;
+  yes: string;
+  no: string;
+  save: string;
+  cancel: string;
+  memoryButton: string;
+  memoryTitle: string;
+  memoryIntro: string;
+  memoryEmpty: string;
+  forget: string;
+  forgetAll: string;
+  confirmForgetAll: string;
+  earlierInChat: string;
   cartLabel: (count: number) => string;
   welcomeTitle: string;
   welcomeLanguages: string;
@@ -136,6 +155,25 @@ const en: Strings = {
   name: "Rukmani",
   tagline: "Your gift concierge",
   newChat: "New chat",
+  yourChats: "Your chats",
+  noChats: "Your chats will appear here.",
+  openChats: "Open your chats",
+  closeChats: "Close chats",
+  renameChat: "Rename chat",
+  deleteChat: "Delete chat",
+  confirmDelete: "Delete this chat?",
+  yes: "Yes",
+  no: "No",
+  save: "Save",
+  cancel: "Cancel",
+  memoryButton: "What Rukmani remembers",
+  memoryTitle: "What Rukmani remembers about you",
+  memoryIntro: "So she can help faster next time — like who you buy for and what they love. Phone numbers and addresses are never kept.",
+  memoryEmpty: "Nothing yet. Rukmani learns as you chat.",
+  forget: "Forget",
+  forgetAll: "Forget everything",
+  confirmForgetAll: "Forget everything Rukmani remembers about you?",
+  earlierInChat: "Earlier in this chat",
   cartLabel: (n) => `Cart, ${n} items`,
   welcomeTitle: "Ayubowan! I'm Rukmani",
   welcomeLanguages: "ආයුබෝවන් · வணக்கம் · Hello",
@@ -227,6 +265,25 @@ const si: Strings = {
   name: "රුක්මණී",
   tagline: "ඔබේ තෑගි උපදේශිකාව",
   newChat: "අලුත් කතාබහක්",
+  yourChats: "ඔබේ කතාබහ",
+  noChats: "ඔබේ කතාබහ මෙතන පෙන්වයි.",
+  openChats: "කතාබහ විවෘත කරන්න",
+  closeChats: "කතාබහ වසන්න",
+  renameChat: "නම වෙනස් කරන්න",
+  deleteChat: "කතාබහ මකන්න",
+  confirmDelete: "මේ කතාබහ මකන්නද?",
+  yes: "ඔව්",
+  no: "නැහැ",
+  save: "සුරකින්න",
+  cancel: "අවලංගු කරන්න",
+  memoryButton: "රුක්මණීට මතක දේවල්",
+  memoryTitle: "රුක්මණීට ඔබ ගැන මතක දේවල්",
+  memoryIntro: "ඊළඟ වතාවේ ඉක්මනින් උදව් කරන්න — ඔබ තෑගි දෙන අය සහ ඔවුන් කැමති දේ වගේ. දුරකථන අංක සහ ලිපින කවදාවත් තබා ගන්නේ නැහැ.",
+  memoryEmpty: "තවම කිසිවක් නැහැ. ඔබ කතා කරන විට රුක්මණී ඉගෙන ගනී.",
+  forget: "අමතක කරන්න",
+  forgetAll: "සියල්ල අමතක කරන්න",
+  confirmForgetAll: "රුක්මණීට ඔබ ගැන මතක සියල්ල අමතක කරන්නද?",
+  earlierInChat: "මෙම කතාබහේ කලින්",
   cartLabel: (n) => `කරත්තය, භාණ්ඩ ${n}`,
   welcomeTitle: "ආයුබෝවන්! මම රුක්මණී",
   welcomeLanguages: "Ayubowan · வணக்கம் · Hello",
@@ -320,6 +377,25 @@ const ta: Strings = {
   name: "ருக்மணி",
   tagline: "உங்கள் பரிசு ஆலோசகர்",
   newChat: "புதிய உரையாடல்",
+  yourChats: "உங்கள் உரையாடல்கள்",
+  noChats: "உங்கள் உரையாடல்கள் இங்கே தோன்றும்.",
+  openChats: "உரையாடல்களைத் திற",
+  closeChats: "உரையாடல்களை மூடு",
+  renameChat: "பெயர் மாற்று",
+  deleteChat: "உரையாடலை நீக்கு",
+  confirmDelete: "இந்த உரையாடலை நீக்கவா?",
+  yes: "ஆம்",
+  no: "இல்லை",
+  save: "சேமி",
+  cancel: "ரத்து",
+  memoryButton: "ருக்மணி நினைவில் வைத்திருப்பவை",
+  memoryTitle: "உங்களைப் பற்றி ருக்மணி நினைவில் வைத்திருப்பவை",
+  memoryIntro: "அடுத்த முறை விரைவாக உதவ — நீங்கள் யாருக்குப் பரிசு வாங்குகிறீர்கள், அவர்களுக்கு என்ன பிடிக்கும் போன்றவை. தொலைபேசி எண்களும் முகவரிகளும் ஒருபோதும் சேமிக்கப்படாது.",
+  memoryEmpty: "இன்னும் எதுவும் இல்லை. நீங்கள் பேசும்போது ருக்மணி கற்றுக்கொள்கிறார்.",
+  forget: "மறந்துவிடு",
+  forgetAll: "அனைத்தையும் மறந்துவிடு",
+  confirmForgetAll: "உங்களைப் பற்றி ருக்மணி நினைவில் வைத்திருப்பதை எல்லாம் மறக்கவா?",
+  earlierInChat: "இந்த உரையாடலில் முன்பு",
   cartLabel: (n) => `கூடை, ${n} பொருட்கள்`,
   welcomeTitle: "வணக்கம்! நான் ருக்மணி",
   welcomeLanguages: "Hello · ආයුබෝවන් · வணக்கம்",

@@ -1,19 +1,22 @@
 "use client";
 
 /**
- * Chat state for one conversation with Rukmani.
+ * The open conversation with Rukmani.
  *
  * `send()` adds the customer's message plus an empty reply from Rukmani,
  * then fills that reply in as stream events arrive: text tokens, tool
  * status (which tool is running), and artifacts (product cards, delivery).
  *
- * `confirmCheckout()` places the order for this conversation's pending
- * checkout. It is only called from the Confirm button on the summary card.
+ * The server keeps every conversation. `open()` loads one back (e.g. from
+ * the chat list, or after a page refresh); `newChat()` starts a fresh one.
+ *
+ * `confirmCheckout()` places the order for this chat's pending checkout.
+ * It is only called from the Confirm button on the summary card.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, confirmCheckout as postCheckout, streamChat } from "@/lib/api";
-import { clearChat, loadChat, saveChat } from "@/lib/storage";
+import { ApiError, confirmCheckout as postCheckout, getChat, streamChat } from "@/lib/api";
+import { loadCurrentChatId, saveCurrentChatId } from "@/lib/storage";
 import type { ChatMessage, Order, StreamEvent } from "@/lib/types";
 
 function newMessage(role: ChatMessage["role"], text = ""): ChatMessage {
@@ -44,43 +47,74 @@ function applyEvent(reply: ChatMessage, event: StreamEvent): ChatMessage {
   }
 }
 
-export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isReplying, setIsReplying] = useState(false);
+interface UseChatOptions {
+  /** Called after each reply, so the chat list can refresh (titles, order). */
+  onTurnFinished?: () => void;
+}
 
-  // The backend remembers the conversation by this id. Created on the
-  // first message, and replaced when the customer starts a new chat.
-  const threadId = useRef<string | null>(null);
+export function useChat({ onTurnFinished }: UseChatOptions = {}) {
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isReplying, setIsReplying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
   const updateMessage = useCallback((id: string, update: (m: ChatMessage) => ChatMessage) => {
     setMessages((all) => all.map((m) => (m.id === id ? update(m) : m)));
   }, []);
 
-  // After a refresh, show the saved conversation again (browser-only, so it
-  // runs after the first render to match the server-rendered page).
-  useEffect(() => {
-    const saved = loadChat();
-    if (saved) {
-      threadId.current = saved.threadId;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from storage
-      setMessages(saved.messages);
-    }
+  /** Start a fresh conversation. */
+  const newChat = useCallback(() => {
+    abort.current?.abort();
+    setChatId(null);
+    setMessages([]);
+    setSummary(null);
+    setIsReplying(false);
+    saveCurrentChatId(null);
   }, []);
 
-  // Save once each reply has finished (not on every streamed word).
+  /** Reopen a saved conversation from the server. */
+  const open = useCallback(
+    async (id: string) => {
+      abort.current?.abort();
+      setIsReplying(false);
+      setIsLoading(true);
+      try {
+        const history = await getChat(id);
+        setChatId(id);
+        setMessages(history.messages);
+        setSummary(history.summary);
+        saveCurrentChatId(id);
+      } catch {
+        newChat(); // deleted, or not this visitor's — start fresh instead
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [newChat],
+  );
+
+  // After a refresh, reopen the chat the customer was in (browser-only, so
+  // it runs after the first render to match the pre-built page).
   useEffect(() => {
-    if (!isReplying && threadId.current && messages.length > 0) {
-      saveChat({ threadId: threadId.current, messages });
-    }
-  }, [messages, isReplying]);
+    const saved = loadCurrentChatId();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore after load
+    if (saved) void open(saved);
+  }, [open]);
 
   const send = useCallback(
     async (text: string) => {
       const message = text.trim();
       if (!message || isReplying) return;
 
-      threadId.current ??= crypto.randomUUID();
+      // A new chat gets its id on the first message; the server lists it then.
+      const id = chatId ?? crypto.randomUUID();
+      if (!chatId) {
+        setChatId(id);
+        saveCurrentChatId(id);
+      }
+
       const reply = newMessage("assistant");
       setMessages((all) => [...all, newMessage("user", message), reply]);
       setIsReplying(true);
@@ -88,7 +122,7 @@ export function useChat() {
       abort.current = new AbortController();
       try {
         await streamChat(
-          threadId.current,
+          id,
           message,
           (event) => updateMessage(reply.id, (m) => applyEvent(m, event)),
           abort.current.signal,
@@ -105,24 +139,16 @@ export function useChat() {
         // If the stream ended without a "done" event, stop showing the status.
         updateMessage(reply.id, (m) => ({ ...m, status: null }));
         setIsReplying(false);
+        onTurnFinished?.();
       }
     },
-    [isReplying, updateMessage],
+    [chatId, isReplying, updateMessage, onTurnFinished],
   );
 
   const confirmCheckout = useCallback(async (): Promise<Order> => {
-    if (!threadId.current) throw new Error("Start a conversation first.");
-    return postCheckout(threadId.current);
-  }, []);
+    if (!chatId) throw new Error("Start a conversation first.");
+    return postCheckout(chatId);
+  }, [chatId]);
 
-  /** Start a fresh conversation (new thread on the backend too). */
-  const reset = useCallback(() => {
-    abort.current?.abort();
-    threadId.current = null;
-    clearChat();
-    setMessages([]);
-    setIsReplying(false);
-  }, []);
-
-  return { messages, isReplying, send, confirmCheckout, reset };
+  return { chatId, messages, summary, isReplying, isLoading, send, confirmCheckout, open, newChat };
 }
