@@ -21,3 +21,6 @@ next-env.d.ts
 .idea/
 .DS_Store
 Thumbs.db
+
+# Backend conversation database (local SQLite file)
+backend/data/

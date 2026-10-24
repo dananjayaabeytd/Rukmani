@@ -74,12 +74,22 @@ def build_agent(
 
 
 def _recent_history(messages: list) -> list:
-    """Keep the last N messages without splitting a tool call from its results.
+    """The messages to send to the model: the last N, and only complete tool exchanges.
 
-    The model API rejects a tool result whose tool call was cut off, so if
-    the cut lands on tool results we move it back until it starts on a
-    normal message.
+    The model API rejects a tool call without its result, and a result
+    without its call. So:
+      - a tool request that never got its result (a turn stopped by the step
+        limit or an error) is dropped, and
+      - if the cut lands on tool results, it moves back to their tool call.
     """
+    answered = {m.tool_call_id for m in messages if m.type == "tool"}
+    messages = [
+        m
+        for m in messages
+        if not getattr(m, "tool_calls", None)
+        or all(call["id"] in answered for call in m.tool_calls)
+    ]
+
     if len(messages) <= _MAX_HISTORY_MESSAGES:
         return messages
     start = len(messages) - _MAX_HISTORY_MESSAGES
