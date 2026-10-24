@@ -1,12 +1,15 @@
 # ────────────────────────────────────────────────────────────────────
 # Model profiles
 #
-# A profile says which chat model Rukmani uses, plus fallbacks that are
-# tried in order if the primary model fails (outage, rate limit, no credit).
-# Every fallback is logged as a warning, so a broken primary never hides.
+# Each profile has two roles, each a primary model plus fallbacks tried in
+# order if the primary fails (outage, rate limit, no credit). Every fallback
+# is logged as a warning, so a broken primary never hides.
 #
-# Switch profile by changing `active_profile` below, or without touching
-# this file by setting MODEL_PROFILE=<name> in backend/.env.
+#   chat     Rukmani herself: talks to customers and calls tools.
+#   utility  Cheap background work: remembering facts, summarising long chats.
+#
+# Switch profile with `active_profile` below, or MODEL_PROFILE=<name> in the
+# environment (on Cloud Run: model_profile in infra/terraform.tfvars).
 #
 # Each model entry:
 #   provider  openai | groq          (needs OPENAI_API_KEY / GROQ_API_KEY)
@@ -16,9 +19,6 @@
 #             use_responses_api  OpenAI only. REQUIRED for OpenAI reasoning
 #                                models (gpt-5.x) that use tools: the older
 #                                chat endpoint rejects tools + reasoning_effort.
-#
-# A model whose API key is missing is skipped, so a profile still works
-# with only one of the two keys.
 # ────────────────────────────────────────────────────────────────────
 
 active_profile: budget
@@ -28,45 +28,65 @@ profiles:
   # Sinhala/Tamil than "balanced". (Groq gpt-oss-20b as primary sometimes
   # answered without searching and invented products, so it's only a fallback.)
   budget:
-    primary:
-      provider: openai
-      model: gpt-5.4-nano
-      params:
-        reasoning_effort: low
-        use_responses_api: true
-    fallbacks:
-      - provider: groq
-        model: openai/gpt-oss-20b
-        params:
-          reasoning_effort: low
+    chat:
+      primary:
+        provider: openai
+        model: gpt-5.4-nano
+        params: { reasoning_effort: low, use_responses_api: true }
+      fallbacks:
+        - provider: groq
+          model: openai/gpt-oss-20b
+          params: { reasoning_effort: low }
+    utility:
+      primary:
+        provider: openai
+        model: gpt-5.4-nano
+        params: { reasoning_effort: low, use_responses_api: true }
+      fallbacks:
+        - provider: groq
+          model: openai/gpt-oss-20b
+          params: { reasoning_effort: low }
 
   # Good quality for a sensible price. Use for real testing and demos.
   balanced:
-    primary:
-      provider: openai
-      model: gpt-5.4-mini
-      params:
-        reasoning_effort: low
-        use_responses_api: true
-    fallbacks:
-      - provider: groq
-        model: openai/gpt-oss-120b
-        params:
-          reasoning_effort: low
+    chat:
+      primary:
+        provider: openai
+        model: gpt-5.4-mini
+        params: { reasoning_effort: low, use_responses_api: true }
+      fallbacks:
+        - provider: groq
+          model: openai/gpt-oss-120b
+          params: { reasoning_effort: low }
+    utility:
+      primary:
+        provider: openai
+        model: gpt-5.4-nano
+        params: { reasoning_effort: low, use_responses_api: true }
+      fallbacks:
+        - provider: groq
+          model: openai/gpt-oss-20b
+          params: { reasoning_effort: low }
 
   # Best Sinhala, Tamil and reasoning. Use for judging day.
   best:
-    primary:
-      provider: openai
-      model: gpt-5.5
-      params:
-        reasoning_effort: low
-        use_responses_api: true
-    fallbacks:
-      - provider: openai
+    chat:
+      primary:
+        provider: openai
+        model: gpt-5.5
+        params: { reasoning_effort: low, use_responses_api: true }
+      fallbacks:
+        - provider: openai
+          model: gpt-5.4-mini
+          params: { reasoning_effort: low, use_responses_api: true }
+        - provider: groq
+          model: openai/gpt-oss-120b
+    utility:
+      primary:
+        provider: openai
         model: gpt-5.4-mini
-        params:
-          reasoning_effort: low
-          use_responses_api: true
-      - provider: groq
-        model: openai/gpt-oss-120b
+        params: { reasoning_effort: low, use_responses_api: true }
+      fallbacks:
+        - provider: groq
+          model: openai/gpt-oss-120b
+          params: { reasoning_effort: low }

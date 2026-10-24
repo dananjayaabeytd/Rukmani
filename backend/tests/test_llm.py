@@ -13,7 +13,8 @@ def test_every_shipped_profile_loads(name):
     loaded_name, profile = load_profile(MODELS_YAML, name)
 
     assert loaded_name == name
-    assert profile.primary.model
+    assert profile.chat.primary.model
+    assert profile.utility.primary.model
 
 
 def test_active_profile_is_used_when_none_given():
