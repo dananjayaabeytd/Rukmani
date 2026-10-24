@@ -12,7 +12,7 @@ supabase_organization_id = "ulfyhlbxcswlhlgcteex"
 langfuse_enabled = false
 
 model_profile = "budget"
-min_instances = 0
+min_instances = 1
 
 cors_origins = [
   "https://rukmani.vercel.app",
