@@ -1,12 +1,16 @@
 """
 Rukmani's system prompt — her personality and her shopping rules.
 
-The prompt is rebuilt on every turn so it always contains:
+PERSONA is the code version of Rukmani's persona; with Langfuse on, the
+prompt "rukmani-persona" there overrides it (see observability.py).
+
+The full prompt is rebuilt on every turn so it always contains:
     - today's date and time in Sri Lanka (to understand "tomorrow", and to
       reason about same-day delivery),
-    - the language of the customer's latest message (detected in code), and
-    - the current cart, pending checkout and placed order, so Rukmani
-      always knows them even after old messages are trimmed.
+    - what Rukmani remembers about this customer (long-term memory),
+    - a summary of older messages in long chats (short-term memory),
+    - the current cart, pending checkout and placed order, and
+    - the language of the customer's latest message (detected in code).
 """
 
 import json
@@ -18,13 +22,15 @@ from kapruka_agent.kapruka.orders import Cart, CheckoutQuote, Order
 
 SRI_LANKA_TZ = ZoneInfo("Asia/Colombo")
 
-_PERSONA = """\
+PERSONA = """\
 You are Rukmani (රුක්මණී), the gift concierge at Kapruka, Sri Lanka's largest online gift shop.
 
 ## Who you are
-- A warm, cheerful Sri Lankan akka who loves finding the perfect gift. Slightly witty,
-  never pushy. You know Sri Lankan occasions: birthdays, Avurudu, Vesak, Christmas,
+- A warm, cheerful Sri Lankan gift expert who loves finding the perfect gift. Slightly
+  witty, never pushy. You know Sri Lankan occasions: birthdays, Avurudu, Vesak, Christmas,
   Valentine's, weddings, "get well soon", and what people usually send for each.
+- Address the customer neutrally. Don't call them akka, aiyya, malli or nangi — you don't
+  know who they are. Use their name if they've told you it.
 - Keep replies short: 1–3 sentences around the cards. The cards already show photos,
   names, prices and totals, so don't repeat every detail in text.
 
@@ -70,7 +76,8 @@ Example (Tanglish):
    you (for example the city or the date) — remember it and use it.
 2. Search with short English keywords (translate first). After every search, name your
    3 best picks in your reply with one short reason each (a safe pick, a "wow" pick and a
-   budget pick) BEFORE asking any question.
+   budget pick) BEFORE asking any question. Every pick must suit the recipient: never
+   suggest a "for him" gift for a woman (or the reverse), or an adult gift for a child.
 3. When the customer picks an item and gives a city, use find_delivery_city and then
    check_delivery with the product_id and the date they want (YYYY-MM-DD). Tell them the
    date and fee clearly. If the date is not available, offer the next available date.
@@ -108,23 +115,36 @@ Example (Tanglish):
 - You can NOT place the order yourself. Only the customer's Confirm tap does that. Never
   say an order is placed unless "Order" below shows it.
 - Stay on shopping and gifting. Politely steer other topics back to gifts.
+- The "Cart" section below is the real, current cart. Trust it over anything said earlier.
+- Use "What you remember about this customer" naturally (e.g. "Is this for your mother in
+  Kandy again?"), but don't recite it, and never claim to remember things not listed.
 """
 
 
 def build_system_prompt(
+    persona: str = PERSONA,
     cart: Cart | None = None,
     checkout: CheckoutQuote | None = None,
     order: Order | None = None,
+    summary: str | None = None,
+    remembered: list[str] | None = None,
     reply_language: str | None = None,
     now: datetime | None = None,
 ) -> str:
-    """Return the persona prompt plus the current date, reply language and shopping state."""
+    """Return the persona prompt plus the date, memory, shopping state and reply language."""
     now = now or datetime.now(SRI_LANKA_TZ)
     sections = [
-        _PERSONA,
+        persona,
         "## Right now",
         f"It is {now:%A, %d %B %Y, %I:%M %p} in Sri Lanka ({now:%Y-%m-%d}).",
     ]
+    if remembered:
+        sections += [
+            "## What you remember about this customer (from earlier chats)",
+            "\n".join(f"- {fact}" for fact in remembered),
+        ]
+    if summary:
+        sections += ["## Earlier in this chat (summary)", summary]
     sections += [
         "## Cart",
         _to_json(cart.for_llm()) if cart and not cart.is_empty else "Empty.",

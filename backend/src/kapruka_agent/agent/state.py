@@ -2,6 +2,7 @@
 The agent's conversation state, saved per thread by the checkpointer.
 
     messages   The chat history (LangGraph appends new messages automatically).
+    summary    Older messages condensed, once the chat gets long.
     cart       What the customer has picked so far.
     checkout   A summary waiting for the customer's "Confirm" click, if any.
     order      The order Kapruka created after the customer confirmed, if any.
@@ -17,6 +18,7 @@ from kapruka_agent.kapruka.orders import Cart, CheckoutQuote, Order
 
 
 class AgentState(MessagesState):
+    summary: str | None  # older messages, condensed (short-term memory)
     cart: Cart
     checkout: CheckoutQuote | None
     order: Order | None
