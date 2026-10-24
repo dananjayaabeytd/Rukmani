@@ -1,0 +1,87 @@
+"""
+Turns the agent's run into a stream of simple events for the UI.
+
+The browser receives Server-Sent Events. Each event's data is JSON with a
+``type`` field:
+
+    {"type": "token",     "text": "..."}                     part of Rukmani's reply
+    {"type": "tool",      "tool": "search_products",
+                          "label": "Searching Kapruka..."}   a tool started
+    {"type": "artifact",  "kind": "products", ...}           data for a card/panel
+    {"type": "done"}                                         reply finished
+    {"type": "error",     "message": "..."}                  something went wrong
+
+The frontend mirrors these in ``frontend/lib/types.ts``.
+"""
+
+import json
+from collections.abc import AsyncIterator
+from typing import Any
+
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langgraph.graph.state import CompiledStateGraph
+from loguru import logger
+
+# Friendly text the UI shows while a tool runs.
+_TOOL_LABELS = {
+    "search_products": "Searching Kapruka for gifts",
+    "get_product_details": "Looking at the product details",
+    "find_delivery_city": "Finding the delivery city",
+    "check_delivery": "Checking delivery date and fee",
+}
+
+_ERROR_MESSAGE = "Sorry, something went wrong on my side. Please try again."
+
+
+def _event(event_type: str, **data: Any) -> dict[str, str]:
+    """Package one event in the shape sse-starlette sends to the browser."""
+    return {"data": json.dumps({"type": event_type, **data}, ensure_ascii=False)}
+
+
+async def stream_agent_events(
+    agent: CompiledStateGraph, thread_id: str, message: str
+) -> AsyncIterator[dict[str, str]]:
+    """Run the agent on one customer message and yield UI events as they happen."""
+    config = {"configurable": {"thread_id": thread_id}}
+    inputs = {"messages": [HumanMessage(message)]}
+
+    try:
+        # "messages" mode gives the reply token by token; "updates" mode gives
+        # each finished step (tool calls requested, tool results returned).
+        async for mode, payload in agent.astream(
+            inputs, config, stream_mode=["messages", "updates"]
+        ):
+            if mode == "messages":
+                chunk, metadata = payload
+                # Only stream the agent's own words, not raw tool output.
+                # Usually these are small chunks; a model that can't stream
+                # sends its whole reply as one AIMessage, which works the same.
+                if (
+                    metadata.get("langgraph_node") == "agent"
+                    and isinstance(chunk, AIMessage)
+                    and chunk.text
+                ):
+                    yield _event("token", text=chunk.text)
+            else:
+                for event in _events_from_update(payload):
+                    yield event
+        yield _event("done")
+    except Exception:
+        logger.exception("Agent run failed for thread {}", thread_id)
+        yield _event("error", message=_ERROR_MESSAGE)
+
+
+def _events_from_update(update: dict[str, Any]) -> list[dict[str, str]]:
+    """Map one finished graph step to UI events."""
+    events = []
+    for node_output in update.values():
+        if not isinstance(node_output, dict):
+            continue  # e.g. interrupt markers — nothing to show yet
+        for msg in node_output.get("messages", []):
+            if isinstance(msg, AIMessage):
+                for call in msg.tool_calls:
+                    label = _TOOL_LABELS.get(call["name"], "Working on it")
+                    events.append(_event("tool", tool=call["name"], label=label))
+            elif isinstance(msg, ToolMessage) and msg.artifact:
+                events.append(_event("artifact", **msg.artifact))
+    return events
