@@ -13,7 +13,7 @@ npm install
 npm run dev                   # http://localhost:3000
 ```
 
-Checks: `npm run lint` · `npx tsc --noEmit` · `npm run build`
+Checks: `npm run lint` · `npm run typecheck` · `npm run build`
 
 ## How the code is organised
 
