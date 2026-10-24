@@ -10,6 +10,7 @@ API docs: http://localhost:8000/docs
 
 from contextlib import asynccontextmanager
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -58,8 +59,23 @@ def _build_limits(settings: Settings) -> Limits:
     )
 
 
+def _start_error_monitoring(settings: Settings) -> None:
+    """Report unexpected errors to Sentry, if a DSN is configured.
+
+    Customers' messages and details are personal, so Sentry is told not to
+    collect personal data, and no performance tracing is sent.
+    """
+    if settings.sentry_dsn:
+        sentry_sdk.init(
+            dsn=settings.sentry_dsn.get_secret_value(),
+            send_default_pii=False,
+            traces_sample_rate=0.0,
+        )
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
+    _start_error_monitoring(settings)
     app = FastAPI(title="Rukmani — Kapruka gift concierge", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
