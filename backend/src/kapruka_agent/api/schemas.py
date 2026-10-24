@@ -17,6 +17,12 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
 
 
+class CheckoutRequest(BaseModel):
+    """POST /api/checkout — the customer tapped Confirm on the checkout summary."""
+
+    thread_id: str = Field(min_length=8, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
+
+
 class HealthResponse(BaseModel):
     """GET /api/health"""
 
