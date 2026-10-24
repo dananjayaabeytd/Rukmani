@@ -48,12 +48,61 @@ export interface DeliveryCheck {
   perishable_warning: string | null;
 }
 
+// ── Cart, checkout and order (backend/src/kapruka_agent/kapruka/orders.py) ──
+
+export interface CartItem {
+  product_id: string;
+  name: string;
+  price: Money; // price of one item
+  image_url: string | null;
+  url: string | null;
+  quantity: number;
+  icing_text: string | null;
+}
+
+export interface Cart {
+  items: CartItem[];
+}
+
+export interface CheckoutDetails {
+  recipient_name: string;
+  recipient_phone: string;
+  address: string;
+  city: string;
+  delivery_date: string; // YYYY-MM-DD
+  location_type: "house" | "apartment" | "office" | "other";
+  instructions: string | null;
+  sender_name: string;
+  anonymous: boolean;
+  gift_message: string | null;
+}
+
+export interface CheckoutQuote {
+  cart: Cart;
+  details: CheckoutDetails;
+  items_total: Money;
+  delivery_fee: Money;
+  grand_total: Money;
+}
+
+export interface Order {
+  checkout_url: string; // the customer opens this to pay
+  order_ref: string;
+  items_total: Money;
+  delivery_fee: Money;
+  grand_total: Money;
+  delivery_date: string;
+  expires_at: string; // ISO 8601 — the pay link stops working after this
+}
+
 // ── Artifacts: data a tool produced for the UI to show ───────────────
 
 export type Artifact =
   | { kind: "products"; query: string; products: Product[] }
   | { kind: "product_detail"; product: ProductDetail }
-  | { kind: "delivery"; product_id: string | null; delivery: DeliveryCheck };
+  | { kind: "delivery"; product_id: string | null; delivery: DeliveryCheck }
+  | { kind: "cart"; cart: Cart; total: Money }
+  | { kind: "checkout"; quote: CheckoutQuote };
 
 // ── Events streamed from POST /api/chat ──────────────────────────────
 

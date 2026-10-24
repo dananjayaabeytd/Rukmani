@@ -6,11 +6,14 @@
  * `send()` adds the customer's message plus an empty reply from Rukmani,
  * then fills that reply in as stream events arrive: text tokens, tool
  * status ("Searching Kapruka..."), and artifacts (product cards, delivery).
+ *
+ * `confirmCheckout()` places the order for this conversation's pending
+ * checkout. It is only called from the Confirm button on the summary card.
  */
 
 import { useCallback, useRef, useState } from "react";
-import { streamChat } from "@/lib/api";
-import type { ChatMessage, StreamEvent } from "@/lib/types";
+import { confirmCheckout as postCheckout, streamChat } from "@/lib/api";
+import type { ChatMessage, Order, StreamEvent } from "@/lib/types";
 
 const CONNECTION_ERROR =
   "I can't reach the shop right now. Please check your connection and try again.";
@@ -86,6 +89,11 @@ export function useChat() {
     [isReplying, updateMessage],
   );
 
+  const confirmCheckout = useCallback(async (): Promise<Order> => {
+    if (!threadId.current) throw new Error("Start a conversation first.");
+    return postCheckout(threadId.current);
+  }, []);
+
   /** Start a fresh conversation (new thread on the backend too). */
   const reset = useCallback(() => {
     abort.current?.abort();
@@ -94,5 +102,5 @@ export function useChat() {
     setIsReplying(false);
   }, []);
 
-  return { messages, isReplying, send, reset };
+  return { messages, isReplying, send, confirmCheckout, reset };
 }
