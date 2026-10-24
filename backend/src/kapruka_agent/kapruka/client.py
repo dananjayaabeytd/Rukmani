@@ -35,6 +35,9 @@ _CACHEABLE_TOOLS = frozenset(
         "kapruka_gift_country_products",
     }
 )
+# Tools that change something at Kapruka. If a call fails halfway we can't
+# know whether Kapruka acted on it, so these are never retried automatically.
+_NEVER_RETRY = frozenset({"kapruka_create_order"})
 _MAX_CACHE_ENTRIES = 1000
 _RECONNECT_DELAY_SECONDS = 2.0
 
@@ -148,30 +151,43 @@ class KaprukaClient:
         return data
 
     async def _call_text(self, tool: str, params: dict[str, Any]) -> str:
-        """Send one tool call and return the raw text Kapruka answered with."""
-        try:
-            await asyncio.wait_for(self._connected.wait(), timeout=self._timeout)
-        except TimeoutError:
-            raise KaprukaError(_UNREACHABLE_MESSAGE) from None
+        """Send one tool call and return the raw text Kapruka answered with.
 
-        session = self._session
-        if session is None:
-            raise KaprukaError(_UNREACHABLE_MESSAGE)
+        If the connection turns out to be dead (common after the server sat
+        idle), it reconnects and tries once more — except for placing orders,
+        which are never repeated in case the first attempt did reach Kapruka.
+        """
+        attempts = 1 if tool in _NEVER_RETRY else 2
+        session = await self._wait_for_session(previous=None)
 
-        started = time.perf_counter()
-        try:
-            # Every Kapruka tool takes its arguments wrapped in a "params" object.
-            result = await session.call_tool(tool, {"params": params})
-        except Exception as exc:
-            logger.warning("Kapruka call {} failed: {} — reconnecting", tool, exc)
-            self._reconnect.set()
-            raise KaprukaError(_UNREACHABLE_MESSAGE) from exc
+        for attempt in range(1, attempts + 1):
+            started = time.perf_counter()
+            try:
+                # Every Kapruka tool takes its arguments wrapped in a "params" object.
+                result = await session.call_tool(tool, {"params": params})
+                break
+            except Exception as exc:
+                logger.warning("Kapruka call {} failed: {} — reconnecting", tool, exc)
+                self._reconnect.set()
+                if attempt == attempts:
+                    raise KaprukaError(_UNREACHABLE_MESSAGE) from exc
+                session = await self._wait_for_session(previous=session)
 
         logger.debug("Kapruka {} took {:.0f} ms", tool, (time.perf_counter() - started) * 1000)
         text = "".join(getattr(block, "text", "") for block in result.content)
         if result.is_error:
             raise KaprukaError(text.strip() or f"Kapruka could not run {tool}.")
         return text
+
+    async def _wait_for_session(self, previous: Client | None) -> Client:
+        """Wait until a connection is open — a NEW one if ``previous`` just failed."""
+        deadline = time.monotonic() + self._timeout
+        while time.monotonic() < deadline:
+            session = self._session
+            if self._connected.is_set() and session is not None and session is not previous:
+                return session
+            await asyncio.sleep(0.05)
+        raise KaprukaError(_UNREACHABLE_MESSAGE)
 
     # ── Cache helpers ──────────────────────────────────────────────
 
