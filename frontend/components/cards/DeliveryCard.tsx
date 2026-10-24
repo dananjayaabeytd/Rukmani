@@ -1,12 +1,19 @@
 import { CalendarCheck, CalendarClock, CircleAlert, Truck } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/format";
 import type { DeliveryCheck } from "@/lib/types";
+import { DateStrip } from "./DateStrip";
+
+interface DeliveryCardProps {
+  delivery: DeliveryCheck;
+  productId: string | null;
+}
 
 /**
  * The result of a delivery check: can it arrive on the date asked for,
- * and if not, the next date that works. Plus the fee and any warning.
+ * and if not, the next date that works. Plus the fee, any warning, and a
+ * strip of upcoming days to check another date with one tap.
  */
-export function DeliveryCard({ delivery }: { delivery: DeliveryCheck }) {
+export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
   const notDeliverable = delivery.item_deliverable === false;
   const deliveryDate = delivery.available
     ? delivery.checked_date
@@ -53,6 +60,16 @@ export function DeliveryCard({ delivery }: { delivery: DeliveryCheck }) {
           <p className="text-ink-soft">
             Delivery fee: <span className="font-semibold text-brand">{fee}</span>
           </p>
+        )}
+
+        {!notDeliverable && (
+          <DateStrip
+            city={delivery.city}
+            productId={productId}
+            checkedDate={delivery.checked_date}
+            available={delivery.available}
+            nextAvailableDate={delivery.next_available_date}
+          />
         )}
 
         {notDeliverable && delivery.deliverable_cities.length > 0 && (

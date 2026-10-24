@@ -69,7 +69,7 @@ function ArtifactView({ artifact, artifactKey }: { artifact: Artifact; artifactK
     case "product_detail":
       return <ProductDetailCard product={artifact.product} />;
     case "delivery":
-      return <DeliveryCard delivery={artifact.delivery} />;
+      return <DeliveryCard delivery={artifact.delivery} productId={artifact.product_id} />;
     case "cart":
       return <CartCard cart={artifact.cart} total={artifact.total} />;
     case "checkout":
