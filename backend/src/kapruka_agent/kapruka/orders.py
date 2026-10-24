@@ -2,7 +2,9 @@
 Cart, checkout and order placement.
 
 The flow:
-    1. Items go into a ``Cart`` (one per conversation).
+    1. Items go into a ``Cart`` (one per conversation). A cart is either all
+       for Sri Lanka, or all from ONE overseas gift store (delivered in that
+       country by Kapruka's partner) — Kapruka can't mix them in one order.
     2. When the customer is ready, their details become ``CheckoutDetails``,
        and a delivery check with the whole cart gives the exact fee. Both
        are kept together as a ``CheckoutQuote`` and shown for confirmation.
@@ -17,13 +19,15 @@ instead of changing the old one, which keeps conversation state safe.
 import re
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, model_validator
 
 from kapruka_agent.kapruka.client import KaprukaClient
 from kapruka_agent.kapruka.models import Money
 
 # Sri Lankan mobile numbers: 07XXXXXXXX or +947XXXXXXXX (spaces/dashes removed first).
 _SL_MOBILE = re.compile(r"^(?:\+94|0)7\d{8}$")
+# Overseas numbers vary by country: just digits, optionally starting with +.
+_ANY_PHONE = re.compile(r"^\+?\d{7,15}$")
 
 
 # ── Cart ───────────────────────────────────────────────────────────
@@ -37,6 +41,7 @@ class CartItem(BaseModel):
     url: str | None = None
     quantity: int = Field(default=1, ge=1, le=99)
     icing_text: str | None = Field(default=None, max_length=120)  # cakes only
+    abroad_country: str | None = None  # set for overseas gift store items, e.g. "UAE"
 
     @property
     def line_total(self) -> float:
@@ -53,6 +58,15 @@ class Cart(BaseModel):
     @property
     def total(self) -> Money:
         return Money(amount=sum(item.line_total for item in self.items), currency="LKR")
+
+    @property
+    def abroad_country(self) -> str | None:
+        """The overseas store country if this is an overseas order, else None (Sri Lanka)."""
+        return self.items[0].abroad_country if self.items else None
+
+    def can_add(self, item: CartItem) -> bool:
+        """An order goes either within Sri Lanka or to ONE overseas country — never mixed."""
+        return self.is_empty or item.abroad_country == self.abroad_country
 
     def with_item(self, new: CartItem) -> "Cart":
         """Add an item. If it is already in the cart, increase its quantity instead."""
@@ -121,27 +135,42 @@ class Cart(BaseModel):
 # ── Checkout ───────────────────────────────────────────────────────
 
 
+DeliveryType = Literal["standard", "economy", "international_gift"]
+
+
 class CheckoutDetails(BaseModel):
     """Everything Kapruka needs to deliver the order, collected in the chat."""
 
     recipient_name: str = Field(min_length=1, max_length=80)
     recipient_phone: str
     address: str = Field(min_length=3, max_length=250)
-    city: str = Field(min_length=2, max_length=100)  # canonical Kapruka city name
+    # Sri Lanka: the canonical Kapruka city name. Overseas: the town, as written.
+    city: str = Field(min_length=2, max_length=100)
     delivery_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")  # YYYY-MM-DD
     location_type: Literal["house", "apartment", "office", "other"] = "house"
     instructions: str | None = Field(default=None, max_length=250)
     sender_name: str = Field(min_length=1, max_length=80)
+    sender_email: str | None = Field(default=None, max_length=120)
     anonymous: bool = False  # gift card shows "Anonymous" instead of the sender
     gift_message: str | None = Field(default=None, max_length=300)
+    delivery_type: DeliveryType = "standard"
+    # Overseas gifts only:
+    country: str | None = None
+    postcode: str | None = Field(default=None, max_length=35)
+    zone: str | None = Field(default=None, max_length=60)  # required for Australia / UAE
 
-    @field_validator("recipient_phone")
-    @classmethod
-    def _valid_mobile(cls, phone: str) -> str:
-        cleaned = re.sub(r"[\s-]", "", phone)
-        if not _SL_MOBILE.match(cleaned):
-            raise ValueError("must be a Sri Lankan mobile number, e.g. 0771234567")
-        return cleaned
+    @model_validator(mode="after")
+    def _check_phone_and_abroad_fields(self) -> "CheckoutDetails":
+        phone = re.sub(r"[\s()-]", "", self.recipient_phone)
+        abroad = self.delivery_type == "international_gift"
+        if abroad and not _ANY_PHONE.match(phone):
+            raise ValueError("recipient_phone must be a phone number in the recipient's country")
+        if not abroad and not _SL_MOBILE.match(phone):
+            raise ValueError("recipient_phone must be a Sri Lankan mobile number, e.g. 0771234567")
+        if abroad and not (self.country and self.postcode):
+            raise ValueError("overseas gifts need the country and the postcode / ZIP")
+        self.recipient_phone = phone
+        return self
 
 
 class CheckoutQuote(BaseModel):
@@ -150,6 +179,7 @@ class CheckoutQuote(BaseModel):
     cart: Cart
     details: CheckoutDetails
     delivery_fee: Money
+    delivery_promise: str | None = None  # economy only: Kapruka's wording, quote as given
 
     @property
     def grand_total(self) -> Money:
@@ -162,6 +192,7 @@ class CheckoutQuote(BaseModel):
             "items_total": self.cart.total.model_dump(),
             "delivery_fee": self.delivery_fee.model_dump(),
             "grand_total": self.grand_total.model_dump(),
+            "delivery_promise": self.delivery_promise,
         }
 
 
@@ -201,19 +232,27 @@ async def place_order(kapruka: KaprukaClient, quote: CheckoutQuote) -> Order:
     ``KaprukaError`` with Kapruka's message if the order is rejected.
     """
     details = quote.details
+    delivery: dict[str, Any] = {
+        "address": details.address,
+        "city": details.city,
+        "date": details.delivery_date,
+        "location_type": details.location_type,
+        "instructions": details.instructions,
+        "type": details.delivery_type,
+    }
+    if details.delivery_type == "international_gift":
+        delivery.update(country=details.country, zip=details.postcode, zone=details.zone)
+
     data = await kapruka.call(
         "kapruka_create_order",
         cart=quote.cart.to_kapruka_lines(),
         recipient={"name": details.recipient_name, "phone": details.recipient_phone},
-        delivery={
-            "address": details.address,
-            "city": details.city,
-            "date": details.delivery_date,
-            "location_type": details.location_type,
-            "instructions": details.instructions,
-            "type": "standard",
+        delivery=delivery,
+        sender={
+            "name": details.sender_name,
+            "email": details.sender_email,
+            "anonymous": details.anonymous,
         },
-        sender={"name": details.sender_name, "anonymous": details.anonymous},
         gift_message=details.gift_message,
         currency="LKR",
     )

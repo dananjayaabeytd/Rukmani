@@ -106,6 +106,9 @@ export interface Strings {
   placing: string;
   outdated: string;
   dear: (name: string) => string;
+  anonymous: string;
+  economyDelivery: string;
+  deliveredAbroad: (country: string) => string;
   // payment
   orderReady: (ref: string) => string;
   deliveryOn: string;
@@ -196,6 +199,9 @@ const en: Strings = {
   placing: "Placing your order…",
   outdated: "This summary was updated — see the newest one below.",
   dear: (name) => `Dear ${name},`,
+  anonymous: "Anonymous",
+  economyDelivery: "Economy delivery",
+  deliveredAbroad: (country) => `Delivered in ${country} by Kapruka's partner`,
   orderReady: (ref) => `Order ready · ${ref}`,
   deliveryOn: "Delivery on",
   payNote: "Pay on Kapruka's secure page to complete it — no account needed.",
@@ -284,6 +290,9 @@ const si: Strings = {
   placing: "ඇණවුම සකස් කරමින්…",
   outdated: "මේ සාරාංශය යාවත්කාලීන වුණා — පහළ අලුත් එක බලන්න.",
   dear: (name) => `ආදරණීය ${name},`,
+  anonymous: "නම නොකියා",
+  economyDelivery: "අඩු මිල බෙදාහැරීම",
+  deliveredAbroad: (country) => `${country} තුළ Kapruka හවුල්කරු විසින් බෙදාහරී`,
   orderReady: (ref) => `ඇණවුම සූදානම් · ${ref}`,
   deliveryOn: "බෙදාහැරීම:",
   payNote: "ඇණවුම සම්පූර්ණ කරන්න Kapruka හි ආරක්ෂිත පිටුවෙන් ගෙවන්න — ගිණුමක් අවශ්‍ය නැහැ.",
@@ -373,6 +382,9 @@ const ta: Strings = {
   placing: "ஆர்டர் செய்யப்படுகிறது…",
   outdated: "இந்தச் சுருக்கம் புதுப்பிக்கப்பட்டது — கீழே உள்ள புதியதைப் பாருங்கள்.",
   dear: (name) => `அன்புள்ள ${name},`,
+  anonymous: "பெயர் குறிப்பிடாமல்",
+  economyDelivery: "குறைந்த கட்டண டெலிவரி",
+  deliveredAbroad: (country) => `${country}-இல் Kapruka கூட்டாளர் டெலிவரி செய்வார்`,
   orderReady: (ref) => `ஆர்டர் தயார் · ${ref}`,
   deliveryOn: "டெலிவரி:",
   payNote: "ஆர்டரை முடிக்க Kapruka-வின் பாதுகாப்பான பக்கத்தில் பணம் செலுத்துங்கள் — கணக்கு தேவையில்லை.",

@@ -10,7 +10,7 @@
  */
 
 import { useState } from "react";
-import { CalendarDays, LoaderCircle, MapPin, Phone, User } from "lucide-react";
+import { CalendarDays, Globe, LoaderCircle, MapPin, Phone, Truck, User } from "lucide-react";
 import { useChatActions } from "@/components/chat/ChatActions";
 import { formatDate, formatMoney } from "@/lib/format";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -41,7 +41,11 @@ export function CheckoutCard({ quote, isLatest }: CheckoutCardProps) {
   }
 
   const { details } = quote;
-  const sender = details.anonymous ? "Anonymous" : details.sender_name;
+  const sender = details.anonymous ? t.anonymous : details.sender_name;
+  // Overseas addresses also show the zone, postcode and country. A Set drops
+  // repeats such as city "Dubai" + zone "Dubai".
+  const addressParts = [details.address, details.city, details.zone, details.postcode, details.country];
+  const fullAddress = [...new Set(addressParts.filter(Boolean))].join(", ");
 
   async function confirm() {
     setPlacing(true);
@@ -65,12 +69,19 @@ export function CheckoutCard({ quote, isLatest }: CheckoutCardProps) {
         <section className="flex flex-col gap-1.5 text-ink">
           <Line icon={<User className="size-4" />}>{details.recipient_name}</Line>
           <Line icon={<Phone className="size-4" />}>{details.recipient_phone}</Line>
-          <Line icon={<MapPin className="size-4" />}>
-            {details.address}, {details.city}
-          </Line>
+          <Line icon={<MapPin className="size-4" />}>{fullAddress}</Line>
           <Line icon={<CalendarDays className="size-4" />}>
             {formatDate(details.delivery_date, t.locale)}
           </Line>
+          {details.delivery_type === "economy" && (
+            <Line icon={<Truck className="size-4" />}>
+              {t.economyDelivery}
+              {quote.delivery_promise && ` · ${quote.delivery_promise}`}
+            </Line>
+          )}
+          {details.delivery_type === "international_gift" && details.country && (
+            <Line icon={<Globe className="size-4" />}>{t.deliveredAbroad(details.country)}</Line>
+          )}
         </section>
 
         {details.gift_message && (

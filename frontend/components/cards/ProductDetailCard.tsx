@@ -9,7 +9,8 @@ import type { ProductDetail } from "@/lib/types";
 /** A closer look at one product, including where it can be delivered. */
 export function ProductDetailCard({ product }: { product: ProductDetail }) {
   const { t } = useLanguage();
-  const limitedDelivery = product.delivery && !product.delivery.island_wide;
+  const abroadCountry = product.international_gift?.country;
+  const limitedDelivery = product.delivery?.island_wide === false;
   // Kapruka descriptions contain long runs of spaces; tidy them for display.
   const description = product.description.replace(/\s+/g, " ").trim();
 
@@ -28,9 +29,11 @@ export function ProductDetailCard({ product }: { product: ProductDetail }) {
 
         <p className="flex items-center gap-1 text-xs text-ink-soft">
           <MapPin className="size-3.5 text-brand-light" aria-hidden />
-          {limitedDelivery
-            ? t.limitedCities(product.delivery?.deliverable_city_count ?? "")
-            : t.islandWide}
+          {abroadCountry
+            ? t.deliveredAbroad(abroadCountry)
+            : limitedDelivery
+              ? t.limitedCities(product.delivery?.deliverable_city_count ?? "")
+              : t.islandWide}
         </p>
 
         <a

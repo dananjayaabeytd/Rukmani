@@ -28,14 +28,16 @@ export interface ProductDetail extends Product {
   description: string;
   images: string[];
   delivery: {
-    island_wide: boolean;
+    island_wide: boolean | null; // null for overseas store items
     deliverable_city_count: number | null;
     deliverable_cities: string[];
   } | null;
+  /** Set for overseas gift store items: delivered IN that country by Kapruka's partner. */
+  international_gift: { country: string; orderable: boolean } | null;
 }
 
 export interface DeliveryCheck {
-  city: string;
+  city: string | null; // null for overseas gifts
   checked_date: string; // YYYY-MM-DD
   available: boolean;
   delivery_fee: number | null;
@@ -58,6 +60,7 @@ export interface CartItem {
   url: string | null;
   quantity: number;
   icing_text: string | null;
+  abroad_country: string | null; // set for overseas gift store items
 }
 
 export interface Cart {
@@ -73,8 +76,14 @@ export interface CheckoutDetails {
   location_type: "house" | "apartment" | "office" | "other";
   instructions: string | null;
   sender_name: string;
+  sender_email: string | null;
   anonymous: boolean;
   gift_message: string | null;
+  delivery_type: "standard" | "economy" | "international_gift";
+  // Overseas gifts only:
+  country: string | null;
+  postcode: string | null;
+  zone: string | null;
 }
 
 export interface CheckoutQuote {
@@ -83,6 +92,7 @@ export interface CheckoutQuote {
   items_total: Money;
   delivery_fee: Money;
   grand_total: Money;
+  delivery_promise: string | null; // economy only, e.g. "Delivered in 3–5 working days"
 }
 
 export interface Order {

@@ -18,6 +18,8 @@ interface DeliveryCardProps {
  */
 export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
   const { t } = useLanguage();
+  // This card comes from Sri Lanka delivery checks, which always name a city.
+  const city = delivery.city ?? "";
   const notDeliverable = delivery.item_deliverable === false;
   const deliveryDate = delivery.available
     ? delivery.checked_date
@@ -36,13 +38,13 @@ export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
     <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-brand-muted/20">
       <div className="flex items-center gap-2 bg-brand px-4 py-2 text-sm font-medium text-white">
         <Truck className="size-4 text-sun" aria-hidden />
-        {t.deliveryTo(delivery.city)}
+        {t.deliveryTo(city)}
       </div>
 
       <div className="flex flex-col gap-2 p-4 text-sm">
         {notDeliverable ? (
           <Row icon={<CircleAlert className="size-5 text-red-600" />}>
-            {t.notDelivered(delivery.city)}
+            {t.notDelivered(city)}
           </Row>
         ) : delivery.available ? (
           <Row icon={<CalendarCheck className="size-5 text-success" />}>
@@ -68,7 +70,7 @@ export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
 
         {!notDeliverable && (
           <DateStrip
-            city={delivery.city}
+            city={city}
             productId={productId}
             checkedDate={delivery.checked_date}
             available={delivery.available}

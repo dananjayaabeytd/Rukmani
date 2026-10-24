@@ -31,6 +31,8 @@ _CACHEABLE_TOOLS = frozenset(
         "kapruka_get_product",
         "kapruka_list_delivery_cities",
         "kapruka_list_categories",
+        "kapruka_gift_countries",
+        "kapruka_gift_country_products",
     }
 )
 _MAX_CACHE_ENTRIES = 1000

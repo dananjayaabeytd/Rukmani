@@ -51,9 +51,16 @@ class ProductCard(BaseModel):
 class DeliveryScope(BaseModel):
     """Where a product can be delivered."""
 
-    island_wide: bool = True
+    island_wide: bool | None = True  # None for overseas store items (delivered abroad)
     deliverable_city_count: int | None = None  # only when island_wide is false
     deliverable_cities: list[str] = Field(default_factory=list)  # capped at 60 by Kapruka
+
+
+class AbroadStore(BaseModel):
+    """Set on products from an overseas gift store: delivered IN that country by a partner."""
+
+    country: str
+    orderable: bool = True
 
 
 class ProductDetail(ProductCard):
@@ -62,6 +69,7 @@ class ProductDetail(ProductCard):
     description: str = ""
     images: list[str] = Field(default_factory=list)
     delivery: DeliveryScope | None = None
+    international_gift: AbroadStore | None = None  # only for overseas store products
 
     @classmethod
     def from_api(cls, data: dict[str, Any]) -> "ProductDetail":
@@ -76,7 +84,9 @@ class ProductDetail(ProductCard):
         summary["in_stock"] = self.in_stock
         # Kapruka descriptions contain long runs of spaces; collapse them to save tokens.
         summary["description"] = " ".join(self.description.split())[:600]
-        if self.delivery and not self.delivery.island_wide:
+        if self.international_gift:
+            summary["delivery"] = {"delivered_in_country": self.international_gift.country}
+        elif self.delivery and self.delivery.island_wide is False:
             summary["delivery"] = {
                 "island_wide": False,
                 "city_count": self.delivery.deliverable_city_count,
@@ -146,10 +156,33 @@ class OrderStatus(BaseModel):
         }
 
 
+class EconomyOption(BaseModel):
+    """Kapruka's cheaper courier: a few days instead of a chosen date."""
+
+    available: bool = False
+    forced: bool = False  # True: economy is the ONLY option for this cart
+    fee: float | None = None
+    currency: str = "LKR"
+    promise: str | None = None  # Kapruka's wording, quote as given
+    delivery_date: str | None = None  # "expected by"
+    saving: float | None = None  # compared with the standard fee
+
+    def for_llm(self) -> dict[str, Any]:
+        return {
+            "only_option": self.forced,
+            "fee": Money(amount=self.fee, currency=self.currency).label(),
+            "promise": self.promise,
+            "expected_by": self.delivery_date,
+            "saving": Money(amount=self.saving, currency=self.currency).label()
+            if self.saving
+            else None,
+        }
+
+
 class DeliveryCheck(BaseModel):
     """Whether Kapruka can deliver to a city on a date, and the fee."""
 
-    city: str
+    city: str | None = None  # None for overseas gifts (the country comes from the item)
     checked_date: str  # YYYY-MM-DD
     available: bool
     delivery_fee: float | None = None
@@ -161,6 +194,7 @@ class DeliveryCheck(BaseModel):
     item_deliverable: bool | None = None  # only present when a product was checked
     deliverable_cities: list[str] = Field(default_factory=list)
     perishable_warning: str | None = None
+    economy: EconomyOption | None = None  # only when the check included a cart
 
     @field_validator("perishable_warning")
     @classmethod
@@ -182,7 +216,7 @@ class DeliveryCheck(BaseModel):
     def for_llm(self) -> dict[str, Any]:
         summary = self.model_dump(
             exclude_none=True,
-            exclude={"delivery_fee", "fee_currency", "fee_basis", "deliverable_cities"},
+            exclude={"delivery_fee", "fee_currency", "fee_basis", "deliverable_cities", "economy"},
         )
         if self.delivery_fee is not None:
             # Without a cart, Kapruka only knows the maximum fee — say so.
@@ -190,4 +224,31 @@ class DeliveryCheck(BaseModel):
             summary["delivery_fee"] = f"{prefix}{self.fee_currency} {self.delivery_fee:,.0f}"
         if self.deliverable_cities:
             summary["deliverable_cities"] = self.deliverable_cities[:15]
+        if self.economy and self.economy.available:
+            summary["economy"] = self.economy.for_llm()
+        return summary
+
+
+class GiftCountry(BaseModel):
+    """A country where Kapruka delivers gifts through a local partner store."""
+
+    class Zone(BaseModel):
+        name: str
+        delivery_fee: Money
+
+    country: str
+    products_in_stock: int | None = None  # missing when it comes with a store's product list
+    delivery_fee: Money  # one fee per order (0 when the fee depends on the zone)
+    zone_required: bool = False  # Australia and the UAE deliver only to listed zones
+    zones: list[Zone] = Field(default_factory=list)
+    earliest_date: str | None = None
+
+    def for_llm(self) -> dict[str, Any]:
+        summary: dict[str, Any] = {"country": self.country, "earliest_date": self.earliest_date}
+        if self.products_in_stock is not None:
+            summary["gifts_in_stock"] = self.products_in_stock
+        if self.zone_required:
+            summary["zones"] = {z.name: z.delivery_fee.label() for z in self.zones}
+        else:
+            summary["delivery_fee"] = self.delivery_fee.label()
         return summary

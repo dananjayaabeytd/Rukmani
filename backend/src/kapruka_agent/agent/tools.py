@@ -26,6 +26,7 @@ from kapruka_agent.kapruka import KaprukaClient, KaprukaError
 from kapruka_agent.kapruka.models import (
     City,
     DeliveryCheck,
+    GiftCountry,
     OrderStatus,
     ProductCard,
     ProductDetail,
@@ -181,11 +182,61 @@ def build_tools(kapruka: KaprukaClient) -> list[BaseTool]:
         status = OrderStatus.from_api(data)
         return _to_json(status.for_llm()), {"kind": "tracking", "order": status.model_dump()}
 
+    @tool
+    async def list_gift_countries() -> str:
+        """List the countries where Kapruka delivers gifts through a local partner store
+        (for recipients OUTSIDE Sri Lanka): gifts in stock, delivery fee or zones, and the
+        earliest delivery date. Use when the gift is for someone abroad."""
+        try:
+            data = await kapruka.call("kapruka_gift_countries")
+        except KaprukaError as exc:
+            return str(exc)
+        countries = [GiftCountry.model_validate(row) for row in data.get("countries", [])]
+        return _to_json([c.for_llm() for c in countries])
+
+    @tool(response_format="content_and_artifact")
+    async def browse_gift_store(country: str, gift_type: str | None = None) -> ToolResult:
+        """Show the gifts in one country's overseas store, as product cards. These are
+        delivered IN that country (not shipped from Sri Lanka) and are NOT in search_products.
+
+        Args:
+            country: The recipient's country, e.g. "UAE", "Australia", "USA", "UK", "Canada".
+            gift_type: Optional filter, e.g. "Cakes", "Flowers", "Hampers", "Chocolates".
+        """
+        try:
+            data = await kapruka.call(
+                "kapruka_gift_country_products", country=country, type=gift_type
+            )
+        except KaprukaError as exc:
+            return str(exc), None
+
+        products = [ProductCard.model_validate(row) for row in data.get("products", [])]
+        if not products:
+            return f"No gifts in stock in the {country} store right now.", None
+
+        delivery = GiftCountry.model_validate(data["delivery"]) if data.get("delivery") else None
+        content = _to_json(
+            {
+                "country": data.get("country", country),
+                "earliest_date": data.get("earliest_date"),
+                "delivery": delivery.for_llm() if delivery else None,
+                "gifts": [p.for_llm() for p in products],
+            }
+        )
+        artifact = {
+            "kind": "products",
+            "query": f"{country} gifts",
+            "products": [p.model_dump() for p in products[:_SEARCH_LIMIT]],
+        }
+        return content, artifact
+
     catalogue_tools = [
         search_products,
         get_product_details,
         find_delivery_city,
         check_delivery,
         track_order,
+        list_gift_countries,
+        browse_gift_store,
     ]
     return [*catalogue_tools, *build_cart_tools(kapruka)]
