@@ -21,10 +21,12 @@ Checks: `npm run lint` · `npx tsc --noEmit` · `npm run build`
 |---|---|
 | `app/` | Page, root layout (fonts, metadata) and `globals.css` (Kapruka colour tokens). |
 | `lib/types.ts` | Types shared with the backend. Keep in sync with the backend's `models.py` and `events.py`. |
-| `lib/api.ts` | Sends a message to `POST /api/chat` and parses the Server-Sent Events reply. |
+| `lib/api.ts` | `streamChat` (`POST /api/chat`, parses the Server-Sent Events reply) and `confirmCheckout` (`POST /api/checkout`). |
 | `hooks/useChat.ts` | Conversation state: applies each stream event to Rukmani's reply. |
-| `components/chat/` | Screen layout: header, welcome screen, messages, status pill, message box. |
-| `components/cards/` | What tools found: product carousel, product details, delivery check. |
+| `components/chat/` | Screen layout: header with cart, welcome screen, messages, status pill, message box, cart drawer. `ChatActions.tsx` shares actions like "send" with the cards. |
+| `components/cards/` | What tools produced: product carousel, product details, delivery check, cart, checkout summary (with gift card preview) and the pay-link card. |
+
+Cart changes from the UI ("Add to cart", remove in the drawer) are sent to Rukmani as messages, so she always knows the cart. Only the **Confirm** button on the checkout summary places an order.
 
 ## Brand colours
 

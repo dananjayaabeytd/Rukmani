@@ -19,6 +19,9 @@ Rukmani is a chat shopping assistant for [Kapruka.com](https://www.kapruka.com),
 - Searches the **live Kapruka catalogue** and shows products as cards.
 - Suggests **3 picks** with a reason for each: a safe pick, a "wow" pick and a budget pick.
 - Checks **delivery to the customer's city and date**, including the fee and the next available date.
+- Builds a **multi-item cart**, with icing text for cakes.
+- Writes the **gift card message** in the customer's language and shows a preview of the card.
+- Shows a **checkout summary** with the exact total. On **Confirm**, it creates a real Kapruka order and gives a pay link.
 
 Everything comes from Kapruka's real data through the Kapruka MCP server (`https://mcp.kapruka.com/mcp`). Rukmani never invents products, prices or delivery dates.
 
@@ -33,16 +36,19 @@ Everything comes from Kapruka's real data through the Kapruka MCP server (`https
 
 ```
 Browser (chat UI)
-   │  POST /api/chat  ← one message
-   ▼                  → Server-Sent Events: reply text, product cards, delivery checks
+   │  POST /api/chat      ← one message
+   │                      → Server-Sent Events: reply text + cards (products, delivery, cart, checkout)
+   │  POST /api/checkout  ← customer tapped Confirm → real order + pay link
+   ▼
 FastAPI
    ▼
-LangGraph agent (Rukmani)  ⇄  tools: search, product details, city lookup, delivery check
+LangGraph agent (Rukmani)  ⇄  tools: search, product details, city lookup, delivery check,
+   │                               add / update / remove cart items, prepare checkout
    ▼
 Kapruka MCP client  →  mcp.kapruka.com/mcp
 ```
 
-- **The agent cannot place orders by itself.** Checkout will be a step the customer confirms in the UI.
+- **The agent cannot place orders by itself.** It prepares a summary; only the customer's Confirm click calls `POST /api/checkout`, which creates the order.
 - **Models are swappable profiles** (`budget`, `balanced`, `best`) in [`backend/config/models.yaml`](backend/config/models.yaml), using OpenAI and Groq.
 
 ## Quick start

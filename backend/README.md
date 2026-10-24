@@ -40,14 +40,22 @@ Dependencies point one way only: `api → agent → kapruka`.
 
 | Folder | Job |
 |---|---|
-| `kapruka/` | The only code that talks to Kapruka. `client.py` keeps one MCP connection open, reconnects, and caches catalogue answers. `models.py` holds typed views of Kapruka's JSON. |
+| `kapruka/` | The only code that talks to Kapruka. `client.py` keeps one MCP connection open, reconnects, and caches catalogue answers. `models.py` holds typed views of Kapruka's JSON. `orders.py` holds the cart, checkout and `place_order`. |
 | `config/models.yaml` | Model profiles: which model Rukmani uses, with fallbacks. |
-| `agent/` | `prompts.py` (Rukmani's persona), `tools.py` (what she can do), `llm.py` (builds the model from the active profile), `graph.py` (the LangGraph loop). |
-| `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `events.py` (agent run → UI events), `schemas.py` (request bodies). |
+| `agent/` | `prompts.py` (Rukmani's persona), `tools.py` (catalogue tools), `cart_tools.py` (cart + checkout tools), `state.py` (cart/checkout/order saved per conversation), `llm.py` (builds the model from the active profile), `graph.py` (the LangGraph loop). |
+| `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `checkout.py` (places the order after Confirm), `events.py` (agent run → UI events), `schemas.py` (request bodies). |
+
+## How checkout works
+
+1. Rukmani adds items with `add_to_cart` / `update_cart_item` / `remove_from_cart`. The cart is saved in the conversation state.
+2. With the recipient, address, date and gift message, she calls `prepare_checkout`. It checks delivery **with the whole cart**, which gives the exact fee, and shows a summary card with a **Confirm** button.
+3. Only that button calls `POST /api/checkout`, which creates the real Kapruka order and returns the pay link (valid 60 minutes).
 
 ## Design decisions
 
-- **The model cannot place orders.** There is no order tool. Checkout will be a separate endpoint the customer confirms in the UI.
+- **The model cannot place orders.** There is no order tool. Only the customer's Confirm click creates one, and the endpoint refuses duplicates.
+- **Any cart change cancels a pending checkout**, so the customer never confirms a summary that no longer matches the cart.
+- **One tool call at a time** (`parallel_tool_calls=False`), so two cart changes can't overwrite each other.
 - **Each tool returns two things:** a small summary for the model and full data for the UI. That keeps model tokens low and the cards rich.
 - **Catalogue answers are cached for 10 minutes.** Kapruka allows 60 requests/min per IP, and every visitor shares our server's IP.
 - **Conversations are kept in memory** (`InMemorySaver`), so they are lost on restart. To keep them across restarts, switch to a SQLite or Postgres checkpointer in `graph.py`.
