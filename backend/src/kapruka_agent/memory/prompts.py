@@ -21,9 +21,12 @@ KEEP facts like:
 NEVER keep:
 - phone numbers, email addresses, street addresses, payment or order details
 - one-off details of this order (quantities, icing text, delivery date of this order)
+- what they are shopping for right now ("Customer wants red roses for their mother");
+  keep only the lasting part ("Customer buys gifts for their mother")
 - anything about Rukmani or the shop itself
 
 Write each fact as one short sentence in ENGLISH, even if the chat is in Sinhala or Tamil.
+Never guess the customer's gender: write "the customer" and "their", not "his" or "her".
 Do not repeat facts already known. If there is nothing new worth keeping, return no facts.
 
 Already known:
