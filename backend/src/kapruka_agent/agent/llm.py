@@ -18,6 +18,7 @@ from langchain_core.language_models import BaseChatModel, LanguageModelInput
 from langchain_core.messages import BaseMessage
 from langchain_core.runnables import Runnable
 from langchain_core.tools import BaseTool
+from langchain_core.tracers.schemas import Run
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 from loguru import logger
@@ -75,6 +76,15 @@ def _create_model(spec: ModelSpec, settings: Settings) -> BaseChatModel | None:
     return None
 
 
+def _log_failures(model: ChatModel, label: str) -> ChatModel:
+    """Log a warning whenever this model fails, so a silent fallback can't hide a problem."""
+
+    def on_error(run: Run) -> None:
+        logger.warning("Model {} failed, trying the next one: {}", label, run.error)
+
+    return model.with_listeners(on_error=on_error)
+
+
 def build_chat_model(settings: Settings, tools: Sequence[BaseTool]) -> ChatModel:
     """Build the tool-calling chat model for the configured profile."""
     profile_name, profile = load_profile(settings.models_config_path, settings.model_profile)
@@ -86,7 +96,8 @@ def build_chat_model(settings: Settings, tools: Sequence[BaseTool]) -> ChatModel
         if model is not None:
             # One tool call at a time: two cart tools running in parallel would
             # both edit the same cart and one change would be lost.
-            models.append(model.bind_tools(tools, parallel_tool_calls=False))
+            bound = model.bind_tools(tools, parallel_tool_calls=False)
+            models.append(_log_failures(bound, spec.label()))
             labels.append(spec.label())
 
     if not models:
