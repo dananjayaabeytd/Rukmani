@@ -45,16 +45,20 @@ class ChatRepository(Protocol):
 
 # ── Postgres (Supabase) ────────────────────────────────────────────
 
-_SCHEMA = """
-create table if not exists chats (
-    id          text primary key,
-    visitor_id  text not null,
-    title       text not null,
-    created_at  timestamptz not null default now(),
-    updated_at  timestamptz not null default now()
-);
-create index if not exists chats_visitor_recent on chats (visitor_id, updated_at desc);
-"""
+# One statement each: the pool prepares every query (prepare_threshold=0),
+# and a prepared statement can't hold more than one command.
+_SCHEMA = [
+    """
+    create table if not exists chats (
+        id          text primary key,
+        visitor_id  text not null,
+        title       text not null,
+        created_at  timestamptz not null default now(),
+        updated_at  timestamptz not null default now()
+    )
+    """,
+    "create index if not exists chats_visitor_recent on chats (visitor_id, updated_at desc)",
+]
 
 
 class PostgresChatRepository:
@@ -64,7 +68,8 @@ class PostgresChatRepository:
     async def setup(self) -> None:
         """Create the table on first run (safe to call every start)."""
         async with self._pool.connection() as conn:
-            await conn.execute(_SCHEMA)
+            for statement in _SCHEMA:
+                await conn.execute(statement)
 
     async def get(self, chat_id: str) -> Chat | None:
         async with self._pool.connection() as conn:
