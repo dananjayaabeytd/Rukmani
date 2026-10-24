@@ -1,0 +1,105 @@
+# Deploys on every push to main, after CI passes:
+#   backend   build the Docker image → push to Artifact Registry → Cloud Run
+#   frontend  build with the Vercel CLI → deploy to Vercel production
+# Each part only deploys when its folder changed (or when run by hand).
+#
+# Google Cloud access uses Workload Identity Federation (no stored keys).
+# The only secret needed is VERCEL_TOKEN.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_ID: rukmani-512609
+  REGION: asia-south1
+  SERVICE: rukmani-api
+  IMAGE: asia-south1-docker.pkg.dev/rukmani-512609/rukmani/api
+  WORKLOAD_IDENTITY_PROVIDER: projects/240930203956/locations/global/workloadIdentityPools/github/providers/github-actions
+  DEPLOYER_SA: github-deployer@rukmani-512609.iam.gserviceaccount.com
+  VERCEL_ORG_ID: team_L6FFBTSkQf3NqpU4zETr3yKh
+  VERCEL_PROJECT_ID: prj_70s0wcTps5dzpjgKalLVsSohOTsj
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  changes:
+    name: What changed?
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  backend:
+    name: Deploy backend (Cloud Run)
+    needs: [ci, changes]
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # Never run at the same time as a Terraform apply on the same service.
+    concurrency: rukmani-gcp
+    permissions:
+      contents: read
+      id-token: write # lets the job ask GitHub for a token to log in to Google
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push the image
+        run: |
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build -t "$IMAGE:$GITHUB_SHA" backend
+          docker push "$IMAGE:$GITHUB_SHA"
+
+      - name: Deploy to Cloud Run
+        # Only the image changes; all other settings are owned by Terraform.
+        run: |
+          gcloud run deploy "$SERVICE" --image "$IMAGE:$GITHUB_SHA" \
+            --project "$PROJECT_ID" --region "$REGION" --quiet
+
+      - name: Smoke test
+        run: |
+          url=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
+          curl --fail --silent --show-error --max-time 60 "$url/api/health"
+
+  frontend:
+    name: Deploy frontend (Vercel)
+    needs: [ci, changes]
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    concurrency: rukmani-vercel
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --global vercel@65.2.0
+      # Pull the project's settings and env vars (incl. NEXT_PUBLIC_API_URL, set by Terraform).
+      - run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+      - run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+      - run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
