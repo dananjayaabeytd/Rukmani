@@ -17,6 +17,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import type { CheckoutQuote, Order } from "@/lib/types";
 import { CartLines } from "./CartLines";
 import { GiftCardPreview } from "./GiftCardPreview";
+import { GiftUnboxing } from "./GiftUnboxing";
 import { PayCard } from "./PayCard";
 
 interface CheckoutCardProps {
@@ -31,7 +32,13 @@ export function CheckoutCard({ quote, isLatest }: CheckoutCardProps) {
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (order) return <PayCard order={order} />;
+  if (order) {
+    return (
+      <GiftUnboxing>
+        <PayCard order={order} />
+      </GiftUnboxing>
+    );
+  }
 
   const { details } = quote;
   const sender = details.anonymous ? "Anonymous" : details.sender_name;
