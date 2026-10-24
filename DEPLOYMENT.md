@@ -5,45 +5,27 @@
 | `frontend/` (Next.js) | **Vercel** | https://rukmani.vercel.app |
 | `backend/` (FastAPI) | **Google Cloud Run** (`asia-south1`, Mumbai — closest to Sri Lanka) | https://rukmani-api-240930203956.asia-south1.run.app |
 
-Google Cloud project: `rukmani-512609`. Vercel project: `rukmani`.
+## How it's managed
+
+- **Infrastructure is Terraform** — see [`infra/README.md`](infra/README.md) (first-time setup, everyday changes).
+- **Deploys are GitHub Actions** — see [`.github/workflows/`](.github/workflows/):
+
+| Workflow | When | What |
+|---|---|---|
+| `ci.yml` | Every pull request (and before every deploy) | Backend lint + tests, frontend lint + types + build, Terraform format + validate |
+| `deploy.yml` | Push to `main` | Backend: build image → Artifact Registry → Cloud Run → health check. Frontend: Vercel build → production. Only the parts that changed. |
+| `terraform.yml` | Changes under `infra/` | Pull request: `terraform plan` in the run summary. `main`: `terraform apply` (in the `production` environment). |
+
+GitHub logs in to Google Cloud with **Workload Identity Federation** — no Google keys are stored anywhere. The only GitHub secret is `VERCEL_TOKEN`.
 
 ## How the backend runs
 
-- **Scales to zero:** it costs nothing while idle. The first message after a quiet spell takes a few extra seconds while it wakes up.
-- **At most 1 instance**, so the rate limits are exact and costs stay predictable.
-- **API keys live in Secret Manager** (`openai-api-key`, `groq-api-key`), never in the code or the upload.
-- **Saved conversations reset when the instance shuts down** (its disk is temporary). The browser still shows the chat. To keep conversations, move them to a database (e.g. Cloud SQL Postgres with LangGraph's Postgres checkpointer).
+- **Scales to zero** (free when idle; the first message after a quiet spell takes a few extra seconds). Set `min_instances = 1` in `infra/terraform.tfvars` to keep it warm.
+- **At most 1 instance**, so rate limits are exact and costs predictable.
+- **API keys live in Secret Manager**; the backend's own service account is the only one that can read them.
+- **Saved conversations reset when the instance shuts down** (its disk is temporary). The browser still shows the chat.
 
-## Redeploy the backend
-
-From `backend/` (uploads only the files allowed by `.gcloudignore` — never `.env`):
-
-```bash
-gcloud run deploy rukmani-api --source . --project rukmani-512609 --region asia-south1
-```
-
-Settings such as secrets, limits and CORS are kept between deploys.
-
-### Change settings without redeploying
-
-```bash
-# Switch models, e.g. before judging (budget → balanced → best)
-gcloud run services update rukmani-api --project rukmani-512609 --region asia-south1 \
-  --update-env-vars MODEL_PROFILE=best
-
-# Allow another frontend address (the list contains commas, so use the ^@^ delimiter)
-gcloud run services update rukmani-api --project rukmani-512609 --region asia-south1 \
-  --update-env-vars '^@^CORS_ORIGINS=["https://rukmani.vercel.app","https://your-domain.lk"]'
-```
-
-### Rotate an API key
-
-```bash
-printf '%s' "NEW_KEY" | gcloud secrets versions add openai-api-key --project rukmani-512609 --data-file=-
-gcloud run services update rukmani-api --project rukmani-512609 --region asia-south1   # picks up "latest"
-```
-
-### Logs
+## Logs
 
 ```bash
 gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="rukmani-api"' \
@@ -52,20 +34,9 @@ gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.serv
 
 A line saying `Model ... failed, trying the next one` means the main model is failing and the fallback is answering — investigate it.
 
-## Redeploy the frontend
-
-From `frontend/`:
-
-```bash
-vercel --prod
-```
-
-The API address is the Vercel environment variable `NEXT_PUBLIC_API_URL` (Production). Change it with `vercel env rm` / `vercel env add`, then redeploy.
-
 ## Before judging
 
-- Set `MODEL_PROFILE=best` (or `balanced`) — the `budget` model's Sinhala/Tamil is weaker.
+- Set `model_profile = "best"` (or `"balanced"`) in `infra/terraform.tfvars` — the budget model's Sinhala/Tamil is weaker.
 - Make sure the OpenAI account has credit and a monthly spending limit.
-- Optional: keep one instance warm so judges never wait for a wake-up (costs roughly USD 10–15/month):
-  `gcloud run services update rukmani-api --project rukmani-512609 --region asia-south1 --min-instances 1`
+- Optional: `min_instances = 1` so judges never wait for a wake-up.
 - Open https://rukmani.vercel.app on a phone over mobile data and run one full chat.
