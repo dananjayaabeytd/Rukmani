@@ -48,9 +48,25 @@ class Settings(BaseSettings):
     kapruka_cache_ttl_seconds: int = 600
     kapruka_timeout_seconds: float = 20.0
 
+    # ── Conversations ──────────────────────────────────────────────
+    # SQLite file holding every conversation. On a host, put it on a
+    # persistent volume so conversations survive redeploys.
+    conversations_db: Path = BACKEND_DIR / "data" / "conversations.sqlite"
+
+    # ── Protection against abuse and runaway cost ──────────────────
+    chat_messages_per_10_minutes: int = 30  # per visitor IP
+    checkouts_per_hour: int = 5  # per visitor IP (Kapruka allows 30/hour for us in total)
+    chat_messages_per_day: int = 2000  # for all visitors together — protects LLM credits
+    # Most steps (model calls + tool runs) one message may take, so a confused
+    # model can't loop and burn credits.
+    max_agent_steps: int = 16
+    # Behind a hosting proxy (Railway, Fly, Render), the visitor's IP is in
+    # X-Forwarded-For. Set to false if the API is exposed directly.
+    trust_proxy_headers: bool = True
+
     # ── API server ─────────────────────────────────────────────────
     # Browser origins allowed to call the API (the frontend's URL).
-    # In .env, write it as JSON: CORS_ORIGINS=["https://sanda.example.com"]
+    # In .env, write it as JSON: CORS_ORIGINS=["https://rukmani.example.com"]
     cors_origins: list[str] = ["http://localhost:3000"]
     log_level: str = "INFO"
 

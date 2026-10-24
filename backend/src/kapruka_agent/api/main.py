@@ -15,9 +15,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from kapruka_agent.agent import build_agent
 from kapruka_agent.agent.llm import build_chat_model
+from kapruka_agent.agent.persistence import open_checkpointer
 from kapruka_agent.agent.tools import build_tools
+from kapruka_agent.api.limits import DailyLimit, Limits, SlidingWindowLimiter
 from kapruka_agent.api.routes import router
-from kapruka_agent.config import get_settings
+from kapruka_agent.config import Settings, get_settings
 from kapruka_agent.kapruka import KaprukaClient
 from kapruka_agent.log import setup_logging
 
@@ -35,13 +37,25 @@ async def lifespan(app: FastAPI):
     )
     await kapruka.start()
 
-    tools = build_tools(kapruka)
-    app.state.kapruka = kapruka
-    app.state.agent = build_agent(build_chat_model(settings, tools), tools)
+    async with open_checkpointer(settings.conversations_db) as checkpointer:
+        tools = build_tools(kapruka)
+        app.state.kapruka = kapruka
+        app.state.agent = build_agent(build_chat_model(settings, tools), tools, checkpointer)
+        app.state.limits = _build_limits(settings)
+        app.state.max_agent_steps = settings.max_agent_steps
 
-    yield
+        yield
 
     await kapruka.stop()
+
+
+def _build_limits(settings: Settings) -> Limits:
+    return Limits(
+        chat=SlidingWindowLimiter(settings.chat_messages_per_10_minutes, window_seconds=600),
+        checkout=SlidingWindowLimiter(settings.checkouts_per_hour, window_seconds=3600),
+        daily_chat=DailyLimit(settings.chat_messages_per_day),
+        trust_proxy_headers=settings.trust_proxy_headers,
+    )
 
 
 def create_app() -> FastAPI:

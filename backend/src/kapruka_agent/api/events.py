@@ -43,10 +43,14 @@ def _event(event_type: str, **data: Any) -> dict[str, str]:
 
 
 async def stream_agent_events(
-    agent: CompiledStateGraph, thread_id: str, message: str
+    agent: CompiledStateGraph, thread_id: str, message: str, max_steps: int = 16
 ) -> AsyncIterator[dict[str, str]]:
-    """Run the agent on one customer message and yield UI events as they happen."""
-    config = {"configurable": {"thread_id": thread_id}}
+    """Run the agent on one customer message and yield UI events as they happen.
+
+    ``max_steps`` caps model calls + tool runs for this message, so a confused
+    model can't loop forever and burn credits.
+    """
+    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": max_steps}
     inputs = {"messages": [HumanMessage(message)]}
 
     try:
