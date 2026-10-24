@@ -27,7 +27,7 @@ Everything comes from Kapruka's real data through the Kapruka MCP server (`https
 | Folder | What's inside | Status |
 |---|---|---|
 | [`backend/`](backend/) | Python API: FastAPI + LangGraph agent + Kapruka MCP client | Working |
-| `frontend/` | Next.js full-screen chat UI | Next |
+| [`frontend/`](frontend/) | Next.js full-screen chat UI in Kapruka's colours | Working |
 
 ## How it works
 
@@ -47,18 +47,26 @@ Kapruka MCP client  →  mcp.kapruka.com/mcp
 
 ## Quick start
 
-See [`backend/README.md`](backend/README.md). In short:
+Details in [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md). In short, in two terminals:
 
 ```bash
+# 1. Backend → http://localhost:8000
 cd backend
 cp .env.example .env      # add OPENAI_API_KEY and/or GROQ_API_KEY
 uv sync
 uv run uvicorn kapruka_agent.api.main:app --reload --port 8000
+
+# 2. Frontend → http://localhost:3000
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
 ```
 
 ## Tech stack
 
-Python 3.11 · FastAPI · LangGraph · LangChain (OpenAI, Groq) · MCP Python SDK · Pydantic · loguru · uv · pytest · ruff
+- **Backend:** Python 3.11 · FastAPI · LangGraph · LangChain (OpenAI, Groq) · MCP Python SDK · Pydantic · loguru · uv · pytest · ruff
+- **Frontend:** Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Motion · lucide-react · react-markdown
 
 ## Author
 
