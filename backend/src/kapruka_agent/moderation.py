@@ -1,8 +1,9 @@
 """
 A safety check on every customer message, before Rukmani sees it.
 
-Uses OpenAI's moderation endpoint (free, ~100 ms). A message flagged as
-harmful or abusive gets a short fixed reply in the customer's language and
+Uses OpenAI's moderation endpoint (free, ~100 ms). A message that clearly
+scores as harmful (threats, violence, hate, sexual, illegal requests) gets
+a short fixed reply in the customer's language and
 never reaches the agent, so it costs no model call either. If someone
 mentions hurting themselves, the reply points to Sri Lanka's 1926 mental
 health helpline instead.
@@ -21,6 +22,12 @@ from kapruka_agent.agent.language import detect_language
 from kapruka_agent.config import Settings
 
 _MODEL = "omni-moderation-latest"
+
+# A category scoring this much (0–1) blocks the message.
+_BLOCK_SCORE = 0.5
+# Plain rudeness ("you're a useless bot") isn't blocked: Rukmani answers it
+# kindly, with the hotline. Threats are a separate category and are blocked.
+_LEFT_TO_RUKMANI = {"harassment"}
 
 _DECLINE = {
     "en": "I can't help with that. I'm here to help you find gifts and shop on Kapruka. "
@@ -66,17 +73,19 @@ class Moderator:
             logger.warning("Moderation check failed, letting the message through: {}", error)
             return None
 
-        result = response.results[0]
-        if not result.flagged:
+        # Decide on scores, not OpenAI's own "flagged": it also flags plain
+        # rudeness, and misreads some Singlish (a love letter scored as violence 0.35).
+        scores = response.results[0].category_scores.model_dump()
+        serious = sorted(
+            name
+            for name, score in scores.items()
+            if score >= _BLOCK_SCORE and name not in _LEFT_TO_RUKMANI
+        )
+        if not serious:
             return None
 
-        categories = result.categories
-        flagged = [name for name, value in categories.model_dump().items() if value]
-        logger.info("Message blocked by moderation: {}", flagged)
-
-        self_harm = (
-            categories.self_harm or categories.self_harm_intent or categories.self_harm_instructions
-        )
+        logger.info("Message blocked by moderation: {}", serious)
+        self_harm = any(name.startswith("self") for name in serious)
         replies = _SUPPORT if self_harm else _DECLINE
         return replies[_reply_language(message)]
 
