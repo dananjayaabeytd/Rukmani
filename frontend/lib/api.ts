@@ -14,9 +14,20 @@ import type { Order, StreamEvent } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+/** An error our server explained (e.g. rate limit). Its message is safe to show customers. */
+export class ApiError extends Error {}
+
+/** Throw an ApiError carrying the server's explanation ({"detail": "..."}). */
+async function throwApiError(response: Response, fallback: string): Promise<never> {
+  const body = await response.json().catch(() => ({}));
+  const detail = typeof body.detail === "string" ? body.detail : fallback;
+  throw new ApiError(detail);
+}
+
 /**
  * Send one message and call `onEvent` for every event in the reply.
- * Resolves when the stream ends. Throws if the server can't be reached.
+ * Resolves when the stream ends. Throws ApiError if the server refused the
+ * message, or a plain Error if it couldn't be reached.
  */
 export async function streamChat(
   threadId: string,
@@ -31,7 +42,7 @@ export async function streamChat(
     signal,
   });
   if (!response.ok || !response.body) {
-    throw new Error(`Chat request failed (${response.status})`);
+    return throwApiError(response, "Rukmani couldn't take that message. Please try again.");
   }
 
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -64,11 +75,10 @@ export async function confirmCheckout(threadId: string): Promise<Order> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ thread_id: threadId }),
   });
-  const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(body.detail ?? "Couldn't place the order. Please try again.");
+    await throwApiError(response, "Couldn't place the order. Please try again.");
   }
-  return body as Order;
+  return (await response.json()) as Order;
 }
 
 /** Turn one raw SSE block into an event. Comments and pings return null. */

@@ -11,8 +11,9 @@
  * checkout. It is only called from the Confirm button on the summary card.
  */
 
-import { useCallback, useRef, useState } from "react";
-import { confirmCheckout as postCheckout, streamChat } from "@/lib/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError, confirmCheckout as postCheckout, streamChat } from "@/lib/api";
+import { clearChat, loadChat, saveChat } from "@/lib/storage";
 import type { ChatMessage, Order, StreamEvent } from "@/lib/types";
 
 const CONNECTION_ERROR =
@@ -58,6 +59,24 @@ export function useChat() {
     setMessages((all) => all.map((m) => (m.id === id ? update(m) : m)));
   }, []);
 
+  // After a refresh, show the saved conversation again (browser-only, so it
+  // runs after the first render to match the server-rendered page).
+  useEffect(() => {
+    const saved = loadChat();
+    if (saved) {
+      threadId.current = saved.threadId;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from storage
+      setMessages(saved.messages);
+    }
+  }, []);
+
+  // Save once each reply has finished (not on every streamed word).
+  useEffect(() => {
+    if (!isReplying && threadId.current && messages.length > 0) {
+      saveChat({ threadId: threadId.current, messages });
+    }
+  }, [messages, isReplying]);
+
   const send = useCallback(
     async (text: string) => {
       const message = text.trim();
@@ -78,7 +97,10 @@ export function useChat() {
         );
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
-          updateMessage(reply.id, (m) => ({ ...m, text: CONNECTION_ERROR, status: null, failed: true }));
+          // Messages from our server (e.g. "please wait a few minutes") are
+          // written for customers; anything else is a connection problem.
+          const text = error instanceof ApiError ? error.message : CONNECTION_ERROR;
+          updateMessage(reply.id, (m) => ({ ...m, text, status: null, failed: true }));
         }
       } finally {
         // If the stream ended without a "done" event, stop showing the status.
@@ -98,6 +120,7 @@ export function useChat() {
   const reset = useCallback(() => {
     abort.current?.abort();
     threadId.current = null;
+    clearChat();
     setMessages([]);
     setIsReplying(false);
   }, []);
