@@ -23,12 +23,11 @@ COPY config ./config
 COPY src ./src
 RUN uv sync --frozen --no-dev
 
-# Run as a normal user, with a writable folder for the conversations database.
-RUN useradd --create-home rukmani && mkdir /data && chown rukmani /data
+# Run as a normal user. Chats live in Postgres (DATABASE_URL), not on disk.
+RUN useradd --create-home rukmani
 USER rukmani
 
-ENV PATH="/app/.venv/bin:$PATH" \
-    CONVERSATIONS_DB=/data/conversations.sqlite
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 # Hosts like Railway pass the port in $PORT. --proxy-headers lets the app see
