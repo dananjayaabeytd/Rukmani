@@ -24,14 +24,30 @@ Settings (no secrets) are in `terraform.tfvars`. State is kept in the versioned 
 1. **Vercel token:** in Vercel go to *Account Settings → Tokens → Create*, with scope = your team. Copy it.
 2. **Local token:** create `infra/.env` (it's gitignored) with one line:
    `VERCEL_API_TOKEN=<the token>`
-3. **Let Terraform own the API URL:** remove the variable that was added by hand, so Terraform can create it:
-   `cd frontend && vercel env rm NEXT_PUBLIC_API_URL production --yes`
-4. **Apply:**
+3. **Let Terraform own the API URL:** remove the variable that was added by hand, so Terraform can create it (the live site keeps working; it's only read at build time):
+
+   | Windows PowerShell | bash / macOS / Linux |
+   |---|---|
+   | `cd frontend; vercel env rm NEXT_PUBLIC_API_URL production --yes; cd ..` | `cd frontend && vercel env rm NEXT_PUBLIC_API_URL production --yes && cd ..` |
+
+4. **Apply** (review the plan first: it should import 4 — Cloud Run, 2 secrets, the Vercel project — create ~31, change 1 — the service account — and destroy 0):
+
+   Windows PowerShell:
+   ```powershell
+   cd infra
+   # Load VERCEL_API_TOKEN from .env into this terminal only (nothing is printed)
+   Get-Content .env | ForEach-Object { $name, $value = $_ -split '=', 2; if ($name) { Set-Item "env:$name" $value } }
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+   bash / macOS / Linux:
    ```bash
    cd infra
    set -a; . ./.env; set +a      # loads VERCEL_API_TOKEN into this terminal
    terraform init
-   terraform plan                 # review: imports 4 (Cloud Run, 2 secrets, Vercel project), creates ~31, changes 1 (the service account), destroys 0
+   terraform plan
    terraform apply
    ```
 5. **GitHub:** in the repo go to *Settings → Secrets and variables → Actions → New repository secret*, name `VERCEL_TOKEN`, value = the same token. Optionally, under *Settings → Environments*, create `production` with required reviewers, so infrastructure changes wait for your approval.
