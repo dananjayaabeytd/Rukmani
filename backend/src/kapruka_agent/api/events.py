@@ -18,9 +18,10 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
-from langgraph.graph.state import CompiledStateGraph
+from langchain_core.messages import AIMessage, ToolMessage
 from loguru import logger
+
+from kapruka_agent.agent.service import ShoppingAgent
 
 # Friendly text the UI shows while a tool runs.
 _TOOL_LABELS = {
@@ -47,23 +48,13 @@ def _event(event_type: str, **data: Any) -> dict[str, str]:
 
 
 async def stream_agent_events(
-    agent: CompiledStateGraph, thread_id: str, message: str, max_steps: int = 16
+    agent: ShoppingAgent, chat_id: str, visitor_id: str, message: str
 ) -> AsyncIterator[dict[str, str]]:
-    """Run the agent on one customer message and yield UI events as they happen.
-
-    ``max_steps`` caps model calls + tool runs for this message, so a confused
-    model can't loop forever and burn credits.
-    """
-    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": max_steps}
-    inputs = {"messages": [HumanMessage(message)]}
+    """Run one customer turn and yield UI events as they happen."""
     shown_anything = False  # did the customer get any text or card?
 
     try:
-        # "messages" mode gives the reply token by token; "updates" mode gives
-        # each finished step (tool calls requested, tool results returned).
-        async for mode, payload in agent.astream(
-            inputs, config, stream_mode=["messages", "updates"]
-        ):
+        async for mode, payload in agent.stream(chat_id, visitor_id, message):
             if mode == "messages":
                 chunk, metadata = payload
                 # Only stream the agent's own words, not raw tool output.
@@ -83,11 +74,11 @@ async def stream_agent_events(
 
         if not shown_anything:
             # Never leave the customer looking at an empty reply.
-            logger.warning("Empty reply for thread {}", thread_id)
+            logger.warning("Empty reply in chat {}", chat_id)
             yield _event("error", message=_EMPTY_REPLY_MESSAGE)
         yield _event("done")
     except Exception:
-        logger.exception("Agent run failed for thread {}", thread_id)
+        logger.exception("Agent run failed in chat {}", chat_id)
         yield _event("error", message=_ERROR_MESSAGE)
 
 

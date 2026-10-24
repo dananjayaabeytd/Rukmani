@@ -8,8 +8,10 @@ from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
 from kapruka_agent.agent import build_agent
+from kapruka_agent.agent.service import ShoppingAgent
 from kapruka_agent.agent.tools import build_tools
 from kapruka_agent.api.events import stream_agent_events
+from kapruka_agent.observability import Observability
 
 
 class ScriptedChatModel(BaseChatModel):
@@ -40,10 +42,11 @@ async def test_stream_emits_tool_artifact_tokens_and_done(fake_kapruka):
             ]
         )
     )
-    agent = build_agent(model, build_tools(fake_kapruka))
+    agent = ShoppingAgent(build_agent(model, build_tools(fake_kapruka)), Observability())
 
     events = [
-        json.loads(e["data"]) async for e in stream_agent_events(agent, "thread-123", "cake ekak")
+        json.loads(e["data"])
+        async for e in stream_agent_events(agent, "thread-123", "visitor-1234567890", "cake ekak")
     ]
     types = [e["type"] for e in events]
 
@@ -56,8 +59,14 @@ async def test_stream_emits_tool_artifact_tokens_and_done(fake_kapruka):
 
 
 async def test_an_empty_reply_becomes_a_friendly_error(fake_kapruka):
-    agent = build_agent(ScriptedChatModel(replies=iter([AIMessage("")])), build_tools(fake_kapruka))
+    agent = ShoppingAgent(
+        build_agent(ScriptedChatModel(replies=iter([AIMessage("")])), build_tools(fake_kapruka)),
+        Observability(),
+    )
 
-    events = [json.loads(e["data"]) async for e in stream_agent_events(agent, "thread-456", "hi")]
+    events = [
+        json.loads(e["data"])
+        async for e in stream_agent_events(agent, "thread-456", "visitor-1234567890", "hi")
+    ]
 
     assert [e["type"] for e in events] == ["error", "done"]

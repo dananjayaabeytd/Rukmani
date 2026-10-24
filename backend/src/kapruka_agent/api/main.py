@@ -15,14 +15,20 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from kapruka_agent.agent import build_agent
-from kapruka_agent.agent.llm import build_chat_model
-from kapruka_agent.agent.persistence import open_checkpointer
+from kapruka_agent.agent.graph import AgentMemory
+from kapruka_agent.agent.llm import build_chat_model, build_structured_model, build_utility_model
+from kapruka_agent.agent.prompts import PERSONA
+from kapruka_agent.agent.service import ShoppingAgent
 from kapruka_agent.agent.tools import build_tools
 from kapruka_agent.api.limits import DailyLimit, Limits, SlidingWindowLimiter
 from kapruka_agent.api.routes import router
 from kapruka_agent.config import Settings, get_settings
 from kapruka_agent.kapruka import KaprukaClient
 from kapruka_agent.log import setup_logging
+from kapruka_agent.memory import ConversationSummarizer, MemoryBook, MemoryExtractor
+from kapruka_agent.memory.models import ExtractionResult
+from kapruka_agent.observability import Observability
+from kapruka_agent.storage import open_storage
 
 
 @asynccontextmanager
@@ -30,6 +36,7 @@ async def lifespan(app: FastAPI):
     """Build long-lived objects once at startup and close them at shutdown."""
     settings = get_settings()
     setup_logging(settings.log_level)
+    observability = Observability(settings)
 
     kapruka = KaprukaClient(
         settings.kapruka_mcp_url,
@@ -38,16 +45,37 @@ async def lifespan(app: FastAPI):
     )
     await kapruka.start()
 
-    async with open_checkpointer(settings.conversations_db) as checkpointer:
+    database_url = settings.database_url.get_secret_value() if settings.database_url else None
+    async with open_storage(database_url) as storage:
+        memory = MemoryBook(storage.store, max_facts=settings.max_memory_facts)
         tools = build_tools(kapruka)
+        graph = build_agent(
+            build_chat_model(settings, tools),
+            tools,
+            storage.checkpointer,
+            memory=AgentMemory(
+                book=memory,
+                summarizer=ConversationSummarizer(build_utility_model(settings), observability),
+                summarize_after=settings.summarize_after_messages,
+                keep_recent=settings.keep_recent_messages,
+                recall_limit=settings.recalled_memory_facts,
+            ),
+            persona=lambda: observability.prompt("persona", PERSONA),
+        )
+        extractor = MemoryExtractor(
+            build_structured_model(settings, ExtractionResult), memory, observability
+        )
+
         app.state.kapruka = kapruka
-        app.state.agent = build_agent(build_chat_model(settings, tools), tools, checkpointer)
+        app.state.storage = storage
+        app.state.memory = memory
+        app.state.agent = ShoppingAgent(graph, observability, extractor, settings.max_agent_steps)
         app.state.limits = _build_limits(settings)
-        app.state.max_agent_steps = settings.max_agent_steps
 
         yield
 
     await kapruka.stop()
+    observability.shutdown()  # send any traces still buffered
 
 
 def _build_limits(settings: Settings) -> Limits:
@@ -80,8 +108,8 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
+        allow_headers=["Content-Type", "X-Visitor-Id"],
     )
     app.include_router(router)
     return app
