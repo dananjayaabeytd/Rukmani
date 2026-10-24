@@ -7,7 +7,7 @@ The browser receives Server-Sent Events. Each event's data is JSON with a
     {"type": "token",     "text": "..."}                     part of Rukmani's reply
     {"type": "tool",      "tool": "search_products",
                           "label": "Searching Kapruka..."}   a tool started
-    {"type": "artifact",  "kind": "products", ...}           data for a card/panel
+    {"type": "artifact",  "artifact": {"kind": "products", ...}}   data for a card
     {"type": "done"}                                         reply finished
     {"type": "error",     "message": "..."}                  something went wrong
 
@@ -83,5 +83,5 @@ def _events_from_update(update: dict[str, Any]) -> list[dict[str, str]]:
                     label = _TOOL_LABELS.get(call["name"], "Working on it")
                     events.append(_event("tool", tool=call["name"], label=label))
             elif isinstance(msg, ToolMessage) and msg.artifact:
-                events.append(_event("artifact", **msg.artifact))
+                events.append(_event("artifact", artifact=msg.artifact))
     return events

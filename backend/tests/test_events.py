@@ -48,7 +48,7 @@ async def test_stream_emits_tool_artifact_tokens_and_done(fake_kapruka):
     types = [e["type"] for e in events]
 
     assert types[0] == "tool"
-    assert events[1]["kind"] == "products"
+    assert events[1]["artifact"]["kind"] == "products"
     assert "".join(e["text"] for e in events if e["type"] == "token") == (
         "Here are three lovely cakes!"
     )
