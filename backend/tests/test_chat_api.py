@@ -16,18 +16,20 @@ from kapruka_agent.api.history import ui_messages
 from kapruka_agent.api.limits import DailyLimit, Limits, SlidingWindowLimiter
 from kapruka_agent.api.routes import router
 from kapruka_agent.memory import MemoryBook
+from kapruka_agent.moderation import Moderator
 from kapruka_agent.observability import Observability
 from kapruka_agent.storage import Storage
 from kapruka_agent.storage.chats import InMemoryChatRepository
 
 from .test_events import ScriptedChatModel
+from .test_moderation import FakeModerationClient
 
 ALICE = {"X-Visitor-Id": "alice-visitor-0001"}
 BOB = {"X-Visitor-Id": "bob-visitor-000002"}
 
 
 @pytest.fixture
-def client(fake_kapruka):
+def app(fake_kapruka) -> FastAPI:
     """The real routes, with in-memory storage and a scripted model (no network)."""
     storage = Storage(
         checkpointer=InMemorySaver(),
@@ -44,12 +46,18 @@ def client(fake_kapruka):
     app.state.memory = MemoryBook(storage.store)
     app.state.agent = ShoppingAgent(graph, Observability())
     app.state.kapruka = fake_kapruka
+    app.state.moderator = Moderator(None)  # off; tested in test_moderation.py
     app.state.limits = Limits(
         chat=SlidingWindowLimiter(100, 600),
         checkout=SlidingWindowLimiter(100, 3600),
         daily_chat=DailyLimit(1000),
         trust_proxy_headers=False,
     )
+    return app
+
+
+@pytest.fixture
+def client(app):
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
 
 
@@ -121,3 +129,14 @@ def test_history_groups_tool_cards_into_one_reply():
     assert [b["role"] for b in bubbles] == ["user", "assistant"]
     assert bubbles[1]["artifacts"][0]["kind"] == "products"
     assert bubbles[1]["text"] == "Here are 3 picks"
+
+
+async def test_blocked_message_never_reaches_the_agent(app, client):
+    app.state.moderator = Moderator(FakeModerationClient(flagged=True))
+
+    events = await _say(client, "chat-0001", "something abusive")
+
+    assert [e["type"] for e in events] == ["token", "done"]
+    assert "Kapruka" in events[0]["text"]
+    # Not a chat: nothing was saved or listed.
+    assert (await client.get("/api/chats", headers=ALICE)).json() == []

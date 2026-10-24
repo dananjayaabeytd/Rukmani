@@ -16,7 +16,8 @@ visitor can only see and change their own chats and memories.
 
     GET    /api/health             Is the server up, and is Kapruka reachable?
 
-Chat and checkout are rate-limited per visitor IP (see ``limits.py``).
+Chat and checkout are rate-limited per visitor IP (see ``limits.py``), and
+chat messages pass a safety check first (see ``moderation.py``).
 """
 
 from fastapi import APIRouter, Depends, Response
@@ -24,8 +25,16 @@ from sse_starlette import EventSourceResponse
 
 from kapruka_agent.agent.state import get_cart
 from kapruka_agent.api.checkout import confirm_checkout
-from kapruka_agent.api.deps import Agent, Kapruka, Memory, Store, VisitorId, owned_chat
-from kapruka_agent.api.events import stream_agent_events
+from kapruka_agent.api.deps import (
+    Agent,
+    Kapruka,
+    Memory,
+    Moderation,
+    Store,
+    VisitorId,
+    owned_chat,
+)
+from kapruka_agent.api.events import fixed_reply_events, stream_agent_events
 from kapruka_agent.api.history import ui_messages
 from kapruka_agent.api.limits import limit_chat, limit_checkout
 from kapruka_agent.api.schemas import (
@@ -48,8 +57,12 @@ router = APIRouter(prefix="/api")
 
 @router.post("/chat", dependencies=[Depends(limit_chat)])
 async def chat(
-    body: ChatRequest, agent: Agent, storage: Store, visitor_id: VisitorId
+    body: ChatRequest, agent: Agent, storage: Store, moderator: Moderation, visitor_id: VisitorId
 ) -> EventSourceResponse:
+    # Harmful messages get a fixed reply and never reach the agent (moderation.py).
+    if blocked_reply := await moderator.check(body.message):
+        return EventSourceResponse(fixed_reply_events(blocked_reply))
+
     existing = await storage.chats.get(body.thread_id)
     if existing is None:
         # First message of a new chat: list it, titled after the message.

@@ -27,6 +27,7 @@ from kapruka_agent.kapruka import KaprukaClient
 from kapruka_agent.log import setup_logging
 from kapruka_agent.memory import ConversationSummarizer, MemoryBook, MemoryExtractor
 from kapruka_agent.memory.models import ExtractionResult
+from kapruka_agent.moderation import build_moderator
 from kapruka_agent.observability import Observability
 from kapruka_agent.storage import open_storage
 
@@ -71,6 +72,7 @@ async def lifespan(app: FastAPI):
         app.state.memory = memory
         app.state.agent = ShoppingAgent(graph, observability, extractor, settings.max_agent_steps)
         app.state.limits = _build_limits(settings)
+        app.state.moderator = build_moderator(settings)
 
         yield
 

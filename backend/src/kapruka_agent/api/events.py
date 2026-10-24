@@ -82,6 +82,12 @@ async def stream_agent_events(
         yield _event("error", message=_ERROR_MESSAGE)
 
 
+async def fixed_reply_events(text: str) -> AsyncIterator[dict[str, str]]:
+    """A reply that doesn't come from the agent (e.g. a message blocked by moderation)."""
+    yield _event("token", text=text)
+    yield _event("done")
+
+
 def _events_from_update(update: dict[str, Any]) -> list[dict[str, str]]:
     """Map one finished graph step to UI events."""
     events = []
