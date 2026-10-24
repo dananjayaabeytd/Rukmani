@@ -16,6 +16,7 @@ from typing import Annotated
 from fastapi import Depends, Header, HTTPException, Request
 
 from kapruka_agent.agent.service import ShoppingAgent
+from kapruka_agent.faq import Faq
 from kapruka_agent.kapruka import KaprukaClient
 from kapruka_agent.memory import MemoryBook
 from kapruka_agent.moderation import Moderator
@@ -49,6 +50,10 @@ def get_moderator(request: Request) -> Moderator:
     return _from_state(request, "moderator")
 
 
+def get_faq(request: Request) -> Faq:
+    return _from_state(request, "faq")
+
+
 def get_visitor_id(
     x_visitor_id: Annotated[str, Header(min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")],
 ) -> str:
@@ -68,4 +73,5 @@ Kapruka = Annotated[KaprukaClient, Depends(get_kapruka)]
 Store = Annotated[Storage, Depends(get_storage)]
 Memory = Annotated[MemoryBook, Depends(get_memory)]
 Moderation = Annotated[Moderator, Depends(get_moderator)]
+FaqAnswers = Annotated[Faq, Depends(get_faq)]
 VisitorId = Annotated[str, Depends(get_visitor_id)]

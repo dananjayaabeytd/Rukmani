@@ -23,6 +23,7 @@ from kapruka_agent.agent.tools import build_tools
 from kapruka_agent.api.limits import DailyLimit, Limits, SlidingWindowLimiter
 from kapruka_agent.api.routes import router
 from kapruka_agent.config import Settings, get_settings
+from kapruka_agent.faq import Faq
 from kapruka_agent.kapruka import KaprukaClient
 from kapruka_agent.log import setup_logging
 from kapruka_agent.memory import ConversationSummarizer, MemoryBook, MemoryExtractor
@@ -73,6 +74,7 @@ async def lifespan(app: FastAPI):
         app.state.agent = ShoppingAgent(graph, observability, extractor, settings.max_agent_steps)
         app.state.limits = _build_limits(settings)
         app.state.moderator = build_moderator(settings)
+        app.state.faq = Faq.load(settings.faq_path)
 
         yield
 

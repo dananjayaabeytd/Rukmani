@@ -1,0 +1,289 @@
+# Instant answers to common questions — no model call, no cost, instant reply.
+#
+# How it's used (src/kapruka_agent/faq.py):
+#   - Only SHORT messages (10 words or fewer) are looked up.
+#   - A message must closely match one of an entry's `examples` (typos are OK).
+#     "hi" matches; "hi, I need a cake for Kandy tomorrow" does not, so real
+#     requests always reach Rukmani.
+#   - The answer is picked in the customer's language: en, si (Sinhala), ta
+#     (Tamil), singlish, tanglish. If the entry has no answer in that language,
+#     Rukmani answers instead.
+#
+# Facts come from kapruka.com (Office Locations, Order Tracking, International
+# Gifts, Same Day Delivery pages). Keep them in sync if Kapruka changes them.
+# Never put a policy here that isn't on Kapruka's site — send people to the
+# hotline instead.
+
+faq:
+  - id: greeting
+    examples:
+      - hi
+      - hii
+      - hello
+      - helo
+      - hey
+      - hey there
+      - hi there
+      - good morning
+      - good afternoon
+      - good evening
+      - ayubowan
+      - ආයුබෝවන්
+      - හායි
+      - හෙලෝ
+      - vanakkam
+      - வணக்கம்
+      - hello rukmani
+      - hi rukmani
+    answers:
+      en: |
+        Hi! I'm Rukmani, Kapruka's gift concierge 🎁
+        Tell me who it's for and the occasion, and I'll find great options, check delivery to their city and set up the order.
+      si: |
+        ආයුබෝවන්! මම රුක්මණී, Kapruka එකේ තෑගි සහායිකාව 🎁
+        කාටද, මොන අවස්ථාවටද කියන්න — හොඳම තෑගි හොයලා, ඒ නගරයට delivery බලලා, order එක ලෑස්ති කරලා දෙන්නම්.
+      ta: |
+        வணக்கம்! நான் ருக்மணி, Kapruka-வின் பரிசு உதவியாளர் 🎁
+        யாருக்கு, எந்த நிகழ்வுக்கு என்று சொல்லுங்கள் — சிறந்த பரிசுகளைத் தேடி, அவர்கள் ஊருக்கு டெலிவரியைச் சரிபார்த்து, ஆர்டரைத் தயார் செய்கிறேன்.
+      singlish: |
+        Ayubowan! Mama Rukmani, Kapruka eke gift helper 🎁
+        Kaatada, mona occasion ekatada kiyanna — hondama options hoyala, delivery check karala, order eka ready karala dennam.
+      tanglish: |
+        Vanakkam! Naan Rukmani, Kapruka-oda gift helper 🎁
+        Yaarukku, endha occasion-ku nu sollunga — nalla gifts thedi, delivery check panni, order ready pannuren.
+
+  - id: who_are_you
+    examples:
+      - who are you
+      - what are you
+      - what can you do
+      - what do you do
+      - how can you help me
+      - are you a bot
+      - are you human
+      - are you a real person
+      - oya kawda
+      - ඔයා කවුද
+      - neenga yaaru
+      - நீங்கள் யார்
+    answers:
+      en: |
+        I'm Rukmani, Kapruka's AI gift concierge. I can:
+        - find gifts and products from Kapruka's live catalogue,
+        - check delivery to any city in Sri Lanka, and to 9 countries abroad,
+        - build your cart, write the gift card message and set up the order,
+        - track an order you've placed.
+
+        What are you shopping for today?
+      si: |
+        මම රුක්මණී, Kapruka එකේ AI තෑගි සහායිකාව. මට පුළුවන්:
+        - Kapruka එකේ තෑගි සහ භාණ්ඩ හොයන්න,
+        - ලංකාවේ ඕනෑම නගරයකට සහ විදේශ රටවල් 9කට delivery බලන්න,
+        - cart එක හදලා, තෑගි කාඩ් පණිවිඩය ලියලා, order එක ලෑස්ති කරන්න,
+        - ඔබේ order එක track කරන්න.
+
+        අද මොනවද හොයන්නේ?
+      ta: |
+        நான் ருக்மணி, Kapruka-வின் AI பரிசு உதவியாளர். என்னால்:
+        - Kapruka-வில் பரிசுகளையும் பொருட்களையும் தேட முடியும்,
+        - இலங்கையின் எந்த ஊருக்கும், வெளிநாட்டில் 9 நாடுகளுக்கும் டெலிவரியைச் சரிபார்க்க முடியும்,
+        - cart-ஐ உருவாக்கி, பரிசு அட்டை செய்தியை எழுதி, ஆர்டரைத் தயார் செய்ய முடியும்,
+        - உங்கள் ஆர்டரை track செய்ய முடியும்.
+
+        இன்று என்ன தேடுகிறீர்கள்?
+
+  - id: thanks
+    examples:
+      - thanks
+      - thank you
+      - thank you so much
+      - thanks a lot
+      - ty
+      - ok thanks
+      - isthuthi
+      - sthuthi
+      - ස්තූතියි
+      - bohoma sthuthi
+      - nandri
+      - romba nandri
+      - நன்றி
+    answers:
+      en: You're very welcome! 😊 Anything else I can help you find?
+      si: ඔබව සාදරයෙන් පිළිගන්නවා! 😊 තව මොනවා හරි හොයන්න ඕනෙද?
+      ta: மகிழ்ச்சி! 😊 வேறு ஏதாவது தேட உதவட்டுமா?
+      singlish: Welcome! 😊 Thawa monawa hari hoyanna onada?
+      tanglish: Welcome! 😊 Vera edhavadhu thedanuma?
+
+  - id: goodbye
+    examples:
+      - bye
+      - goodbye
+      - bye bye
+      - see you
+      - good night
+      - gn
+    answers:
+      en: Bye for now! 👋 Your chat is saved here whenever you want to continue.
+      si: ගිහින් එන්න! 👋 ඔබේ chat එක මෙතන save වෙලා තියෙනවා, ඕනෑම වෙලාවක නැවත පටන් ගන්න පුළුවන්.
+      ta: பிறகு சந்திப்போம்! 👋 உங்கள் chat இங்கே சேமிக்கப்பட்டுள்ளது, எப்போது வேண்டுமானாலும் தொடரலாம்.
+
+  - id: contact
+    examples:
+      - how can i contact customer service
+      - how do i contact kapruka
+      - customer service number
+      - customer care number
+      - kapruka hotline
+      - hotline number
+      - contact number
+      - phone number
+      - whatsapp number
+      - i want to talk to a human
+      - can i talk to a person
+      - talk to an agent
+    answers:
+      en: |
+        Kapruka's support team is available 24/7:
+        - 📞 Hotline: **+94 117 551 111**
+        - 💬 WhatsApp: **+94 711 222 002**
+
+        I can also help right here — with products, delivery, your cart or tracking an order.
+      si: |
+        Kapruka සහාය කණ්ඩායම පැය 24 පුරාම ඉන්නවා:
+        - 📞 Hotline: **+94 117 551 111**
+        - 💬 WhatsApp: **+94 711 222 002**
+
+        මටත් මෙතනම උදව් කරන්න පුළුවන් — භාණ්ඩ, delivery, cart එක හෝ order එක track කරන්න.
+      ta: |
+        Kapruka உதவிக் குழு 24 மணி நேரமும் உள்ளது:
+        - 📞 Hotline: **+94 117 551 111**
+        - 💬 WhatsApp: **+94 711 222 002**
+
+        இங்கேயே நானும் உதவ முடியும் — பொருட்கள், டெலிவரி, cart அல்லது ஆர்டர் tracking.
+
+  - id: track_order
+    examples:
+      - how do i track my order
+      - how can i track my order
+      - track my order
+      - where is my order
+      - order status
+      - check my order status
+      - mage order eka koheda
+      - en order enga irukku
+    answers:
+      en: Sure! Send me your **12-digit order number** (it's in the confirmation email from Kapruka) and I'll check where it is.
+      si: හරි! ඔබේ **ඉලක්කම් 12ක order අංකය** එවන්න (Kapruka එකෙන් ආපු confirmation email එකේ තියෙනවා), මම බලලා කියන්නම්.
+      ta: சரி! உங்கள் **12 இலக்க ஆர்டர் எண்ணை** அனுப்புங்கள் (Kapruka-வின் confirmation email-இல் இருக்கும்), நான் சரிபார்க்கிறேன்.
+      singlish: Hari! Oyage **12-digit order number** eka ewanna (Kapruka confirmation email eke thiyenawa), mama balala kiyannam.
+      tanglish: Sari! Unga **12-digit order number** anuppunga (Kapruka confirmation email-la irukkum), naan check panni solren.
+
+  - id: overseas
+    examples:
+      - do you deliver overseas
+      - do you deliver abroad
+      - do you ship internationally
+      - can i send gifts abroad
+      - can i send a gift overseas
+      - international delivery
+      - which countries do you deliver to
+    answers:
+      en: |
+        Yes! Kapruka sends gifts to **9 countries**: USA, Canada, UK, Australia, UAE, France, New Zealand, Italy and India 🌍
+        Cakes, flowers, chocolates and hampers are delivered by Kapruka's local partner in each country, usually in 1–3 working days in the main cities. You pay here in rupees.
+
+        Which country should it go to?
+      si: |
+        ඔව්! Kapruka රටවල් **9කට** තෑගි යවනවා: USA, Canada, UK, Australia, UAE, France, New Zealand, Italy සහ India 🌍
+        කේක්, මල්, චොකලට් සහ hampers ඒ ඒ රටේ Kapruka partner කෙනෙක් ගෙනත් දෙනවා — ප්‍රධාන නගරවලට සාමාන්‍යයෙන් වැඩ කරන දින 1–3කින්. ගෙවන්නේ මෙහෙන්ම රුපියල් වලින්.
+
+        කොයි රටටද යවන්න ඕනේ?
+      ta: |
+        ஆம்! Kapruka **9 நாடுகளுக்கு** பரிசுகளை அனுப்புகிறது: USA, Canada, UK, Australia, UAE, France, New Zealand, Italy மற்றும் India 🌍
+        கேக், மலர்கள், சாக்லேட் மற்றும் hampers ஒவ்வொரு நாட்டிலும் Kapruka partner மூலம் வழங்கப்படும் — முக்கிய நகரங்களில் பொதுவாக 1–3 வேலை நாட்களில். நீங்கள் இங்கேயே ரூபாயில் செலுத்தலாம்.
+
+        எந்த நாட்டுக்கு அனுப்ப வேண்டும்?
+
+  - id: same_day
+    examples:
+      - do you have same day delivery
+      - same day delivery
+      - can you deliver today
+      - can it be delivered today
+      - is same day delivery available
+      - what is the cut off time for same day delivery
+    answers:
+      en: |
+        Yes — for many items, if you **order before 12 PM** it can be delivered the same day, island-wide 🚚
+        Tell me the item and the city, and I'll check the exact date and fee for you.
+      si: |
+        ඔව් — ගොඩක් භාණ්ඩ **දවල් 12ට කලින් order කළොත්** එදිනම, දිවයින පුරා delivery කරන්න පුළුවන් 🚚
+        භාණ්ඩය සහ නගරය කියන්න, හරියටම දිනය සහ ගාස්තුව බලලා කියන්නම්.
+      ta: |
+        ஆம் — பல பொருட்களுக்கு **மதியம் 12 மணிக்கு முன் ஆர்டர் செய்தால்** அதே நாளில், இலங்கை முழுவதும் டெலிவரி செய்யலாம் 🚚
+        பொருளையும் ஊரையும் சொல்லுங்கள், சரியான தேதியையும் கட்டணத்தையும் சரிபார்க்கிறேன்.
+
+  - id: delivery_fee
+    examples:
+      - how much is delivery
+      - what is the delivery charge
+      - delivery charges
+      - delivery fee
+      - is delivery free
+      - how much does delivery cost
+    answers:
+      en: The delivery fee depends on the **city, the date and the items**. Tell me where it's going (and what you'd like to send), and I'll check the exact fee.
+      si: Delivery ගාස්තුව **නගරය, දිනය සහ භාණ්ඩ** අනුව වෙනස් වෙනවා. කොහෙටද යවන්නේ (සහ මොනවද) කියන්න, හරියටම ගාස්තුව බලලා කියන්නම්.
+      ta: டெலிவரி கட்டணம் **ஊர், தேதி மற்றும் பொருட்களைப்** பொறுத்தது. எங்கே அனுப்ப வேண்டும் (என்ன அனுப்ப வேண்டும்) என்று சொல்லுங்கள், சரியான கட்டணத்தைச் சரிபார்க்கிறேன்.
+
+  - id: payment
+    examples:
+      - how can i pay
+      - how do i pay
+      - payment methods
+      - what payment methods do you accept
+      - can i pay by card
+      - can i pay cash on delivery
+      - cash on delivery
+      - do you accept cash on delivery
+      - is payment safe
+    answers:
+      en: |
+        When you confirm your order here, I give you a **secure Kapruka payment link** (valid for 60 minutes), and you pay online there.
+        For any other payment questions, Kapruka's 24/7 hotline can help: **+94 117 551 111**.
+      si: |
+        මෙතන order එක confirm කළාම මම **ආරක්ෂිත Kapruka ගෙවීම් link එකක්** දෙනවා (විනාඩි 60ක් valid), ඒකෙන් online ගෙවන්න පුළුවන්.
+        වෙනත් ගෙවීම් ප්‍රශ්න සඳහා Kapruka පැය 24 hotline එක: **+94 117 551 111**.
+      ta: |
+        இங்கே ஆர்டரை confirm செய்ததும், **பாதுகாப்பான Kapruka கட்டண link** ஒன்றைத் தருகிறேன் (60 நிமிடங்கள் valid), அதில் online-ஆகச் செலுத்தலாம்.
+        வேறு கட்டணக் கேள்விகளுக்கு Kapruka 24 மணி நேர hotline: **+94 117 551 111**.
+
+  - id: refund
+    examples:
+      - what is your refund policy
+      - refund policy
+      - return policy
+      - can i return an item
+      - how do i get a refund
+      - can i cancel my order
+      - how do i cancel my order
+      - i want a refund
+    answers:
+      en: |
+        For returns, refunds or cancelling an order, Kapruka's support team handles it directly, 24/7:
+        - 📞 **+94 117 551 111**
+        - 💬 WhatsApp **+94 711 222 002**
+
+        Have your 12-digit order number ready.
+      si: |
+        Return, refund හෝ order එක cancel කරන්න Kapruka සහාය කණ්ඩායම පැය 24 පුරාම උදව් කරනවා:
+        - 📞 **+94 117 551 111**
+        - 💬 WhatsApp **+94 711 222 002**
+
+        ඔබේ ඉලක්කම් 12ක order අංකය ළඟ තියාගන්න.
+      ta: |
+        Return, refund அல்லது ஆர்டரை cancel செய்ய Kapruka உதவிக் குழு 24 மணி நேரமும் உதவும்:
+        - 📞 **+94 117 551 111**
+        - 💬 WhatsApp **+94 711 222 002**
+
+        உங்கள் 12 இலக்க ஆர்டர் எண்ணைத் தயாராக வைத்திருங்கள்.

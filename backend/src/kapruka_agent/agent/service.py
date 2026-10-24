@@ -16,7 +16,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from typing import Any
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from loguru import logger
@@ -69,6 +69,18 @@ class ShoppingAgent:
         finally:
             if memory_task:
                 await self._finish(memory_task)
+
+    async def record_turn(self, chat_id: str, message: str, reply: str) -> None:
+        """Save a turn answered without the model (e.g. from the FAQ).
+
+        It goes into the chat like any other turn, so the chat reopens with it
+        and Rukmani sees it as context on the next message.
+        """
+        await self.graph.aupdate_state(
+            {"configurable": {"thread_id": chat_id}},
+            {"messages": [HumanMessage(message), AIMessage(reply)]},
+            as_node="agent",
+        )
 
     async def _start_memory_extraction(
         self, chat_id: str, visitor_id: str, message: str

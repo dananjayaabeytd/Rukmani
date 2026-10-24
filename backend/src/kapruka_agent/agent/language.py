@@ -23,6 +23,7 @@ _SINGLISH_WORDS = set(
     ona oney eka ekak ekata walata mata oyata puluwanda puluwan kiyala hondai
     honda hondama heta anidda yawanna ganna monawada kohomada thiyenawa
     thiyenawada nadda nehe aney lassana lassanai dawasa mokakda kawda kiyada wage
+    ayubowan isthuthi sthuthi bohoma
     """.split()
 )
 _TANGLISH_WORDS = set(
@@ -30,6 +31,7 @@ _TANGLISH_WORDS = set(
     venum vendum irukku iruku anuppanum anupanum anuppa anupa maathiri mathiri
     enna eppadi naalai nalai nalla thambi thangachi illai illa romba panna
     pannunga kudunga vaanga sollunga endha evvalavu ooru ku kku
+    vanakkam nandri
     """.split()
 )
 _WORD = re.compile(r"[a-z]+")

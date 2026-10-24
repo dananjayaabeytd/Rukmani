@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # ── Model profiles ─────────────────────────────────────────────
     models_config_path: Path = BACKEND_DIR / "config" / "models.yaml"
+    faq_path: Path = BACKEND_DIR / "config" / "faq.yaml"
     # Overrides `active_profile` in models.yaml when set, e.g. MODEL_PROFILE=best
     model_profile: str | None = None
 

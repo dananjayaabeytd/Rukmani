@@ -17,16 +17,19 @@ visitor can only see and change their own chats and memories.
     GET    /api/health             Is the server up, and is Kapruka reachable?
 
 Chat and checkout are rate-limited per visitor IP (see ``limits.py``), and
-chat messages pass a safety check first (see ``moderation.py``).
+chat messages pass a safety check first (see ``moderation.py``). Common
+questions are answered from ``config/faq.yaml`` without a model call.
 """
 
 from fastapi import APIRouter, Depends, Response
+from loguru import logger
 from sse_starlette import EventSourceResponse
 
 from kapruka_agent.agent.state import get_cart
 from kapruka_agent.api.checkout import confirm_checkout
 from kapruka_agent.api.deps import (
     Agent,
+    FaqAnswers,
     Kapruka,
     Memory,
     Moderation,
@@ -57,7 +60,12 @@ router = APIRouter(prefix="/api")
 
 @router.post("/chat", dependencies=[Depends(limit_chat)])
 async def chat(
-    body: ChatRequest, agent: Agent, storage: Store, moderator: Moderation, visitor_id: VisitorId
+    body: ChatRequest,
+    agent: Agent,
+    storage: Store,
+    moderator: Moderation,
+    faq: FaqAnswers,
+    visitor_id: VisitorId,
 ) -> EventSourceResponse:
     # Harmful messages get a fixed reply and never reach the agent (moderation.py).
     if blocked_reply := await moderator.check(body.message):
@@ -70,6 +78,14 @@ async def chat(
     else:
         await owned_chat(body.thread_id, visitor_id, storage)
         await storage.chats.touch(body.thread_id)  # moves it to the top of the list
+
+    # Common questions ("hi", "how do I pay?") are answered from config/faq.yaml
+    # without a model call (faq.py). Everything else goes to Rukmani.
+    if hit := faq.answer(body.message):
+        faq_id, reply = hit
+        logger.info("Answered from FAQ: {}", faq_id)
+        await agent.record_turn(body.thread_id, body.message, reply)
+        return EventSourceResponse(fixed_reply_events(reply))
 
     return EventSourceResponse(stream_agent_events(agent, body.thread_id, visitor_id, body.message))
 

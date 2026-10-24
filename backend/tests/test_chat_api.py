@@ -15,6 +15,7 @@ from kapruka_agent.agent.tools import build_tools
 from kapruka_agent.api.history import ui_messages
 from kapruka_agent.api.limits import DailyLimit, Limits, SlidingWindowLimiter
 from kapruka_agent.api.routes import router
+from kapruka_agent.faq import Faq, FaqEntry
 from kapruka_agent.memory import MemoryBook
 from kapruka_agent.moderation import Moderator
 from kapruka_agent.observability import Observability
@@ -47,6 +48,7 @@ def app(fake_kapruka) -> FastAPI:
     app.state.agent = ShoppingAgent(graph, Observability())
     app.state.kapruka = fake_kapruka
     app.state.moderator = Moderator(None)  # off; tested in test_moderation.py
+    app.state.faq = Faq([])  # empty; tested in test_faq.py
     app.state.limits = Limits(
         chat=SlidingWindowLimiter(100, 600),
         checkout=SlidingWindowLimiter(100, 3600),
@@ -140,3 +142,15 @@ async def test_blocked_message_never_reaches_the_agent(app, client):
     assert "Kapruka" in events[0]["text"]
     # Not a chat: nothing was saved or listed.
     assert (await client.get("/api/chats", headers=ALICE)).json() == []
+
+
+async def test_faq_answer_skips_the_model_but_is_saved(app, client):
+    app.state.faq = Faq([FaqEntry(id="greeting", examples=["hi"], answers={"en": "Hello there!"})])
+
+    events = await _say(client, "chat-0001", "hi")
+    history = (await client.get("/api/chats/chat-0001", headers=ALICE)).json()
+
+    assert [e["type"] for e in events] == ["token", "done"]
+    assert events[0]["text"] == "Hello there!"
+    # Saved like any turn: the chat is listed and reopens with both messages.
+    assert [m["text"] for m in history["messages"]] == ["hi", "Hello there!"]
