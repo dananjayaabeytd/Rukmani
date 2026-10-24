@@ -21,13 +21,14 @@ Checks: `npm run lint` · `npm run typecheck` · `npm run build`
 |---|---|
 | `app/` | Page, root layout (fonts, metadata) and `globals.css` (Kapruka colour tokens). |
 | `lib/types.ts` | Types shared with the backend. Keep in sync with the backend's `models.py` and `events.py`. |
-| `lib/api.ts` | `streamChat` (`POST /api/chat`, parses the Server-Sent Events reply) and `confirmCheckout` (`POST /api/checkout`). |
+| `lib/api.ts` | `streamChat` (`POST /api/chat`, parses the Server-Sent Events reply), `confirmCheckout`, the chat list (list, open, rename, delete) and memory (list, forget). Every call sends the visitor id. |
 | `lib/i18n.ts` | Every interface string in English, Sinhala and Tamil. |
 | `lib/occasions.ts` | Sri Lankan gifting occasions for the "coming up soon" banner. |
-| `lib/storage.ts` | Keeps the conversation in the browser so a refresh doesn't lose it. |
-| `hooks/useChat.ts` | Conversation state: applies each stream event to Rukmani's reply. |
+| `lib/storage.ts` | The browser's anonymous visitor id and the open chat's id. The chats themselves are kept by the server. |
+| `hooks/useChat.ts` | The open conversation: applies each stream event to Rukmani's reply, opens saved chats, starts new ones. |
+| `hooks/useChats.ts` | The chat list in the sidebar (rename, delete). |
 | `components/LanguageProvider.tsx` | The chosen interface language (remembered in the browser). |
-| `components/chat/` | Screen layout: header (language switch, cart), welcome screen with occasion banner, messages, status pill, message box, cart drawer. `ChatActions.tsx` shares actions like "send" with the cards. |
+| `components/chat/` | Screen layout: sidebar with your chats (a slide-in panel on phones), header (language switch, cart), welcome screen with occasion banner, messages, status pill, message box, cart drawer, and the *What Rukmani remembers* panel. `ChatActions.tsx` shares actions like "send" with the cards. |
 | `components/cards/` | What tools produced: product carousel, product details, delivery check with date picker, cart, checkout summary (with gift card preview), gift unboxing + pay-link card, and order tracking. |
 
 Cart changes from the UI ("Add to cart", remove in the drawer, a date in the date picker) are sent to Rukmani as messages in the chosen language, so she always knows the cart and answers in that language. Only the **Confirm** button on the checkout summary places an order.

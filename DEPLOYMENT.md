@@ -16,14 +16,15 @@
 | `deploy.yml` | Push to `main` | Backend: build image → Artifact Registry → Cloud Run → health check. Frontend: Vercel build → production. Only the parts that changed. |
 | `terraform.yml` | Changes under `infra/` | Pull request: `terraform plan` in the run summary. `main`: `terraform apply` (in the `production` environment). |
 
-GitHub logs in to Google Cloud with **Workload Identity Federation** — no Google keys are stored anywhere. The only GitHub secret is `VERCEL_TOKEN`.
+GitHub logs in to Google Cloud with **Workload Identity Federation** — no Google keys are stored anywhere. The only GitHub secrets are `VERCEL_TOKEN` and `SUPABASE_ACCESS_TOKEN`.
 
 ## How the backend runs
 
 - **Scales to zero** (free when idle; the first message after a quiet spell takes a few extra seconds). Set `min_instances = 1` in `infra/terraform.tfvars` to keep it warm.
 - **At most 1 instance**, so rate limits are exact and costs predictable.
-- **API keys live in Secret Manager**; the backend's own service account is the only one that can read them.
-- **Saved conversations reset when the instance shuts down** (its disk is temporary). The browser still shows the chat.
+- **API keys and the database URL live in Secret Manager**; the backend's own service account is the only one that can read them.
+- **Chats, carts and memory live in Supabase Postgres** (`ap-south-1`, Mumbai, next to Cloud Run), created by Terraform. Nothing is lost when the instance scales to zero.
+- **Traces go to Langfuse** once `langfuse_enabled = true` (see `infra/README.md`).
 
 ## Logs
 
@@ -33,6 +34,8 @@ gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.serv
 ```
 
 A line saying `Model ... failed, trying the next one` means the main model is failing and the fallback is answering — investigate it.
+
+For what the agent did in a turn (prompt, tool calls, tokens, cost), open the trace in Langfuse: filter by session (chat id) or user (visitor id).
 
 ## Before judging
 

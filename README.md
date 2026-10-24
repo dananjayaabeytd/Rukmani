@@ -59,7 +59,10 @@ Kapruka MCP client  →  mcp.kapruka.com/mcp
 
 - **The agent cannot place orders by itself.** It prepares a summary; only the customer's Confirm click calls `POST /api/checkout`, which creates the order.
 - **Models are swappable profiles** (`budget`, `balanced`, `best`) in [`backend/config/models.yaml`](backend/config/models.yaml), using OpenAI and Groq.
-- **Built for a public demo:** rate limits per visitor and per day, conversations saved in SQLite (they survive restarts and page refreshes), and optional Sentry error alerts.
+- **Chats are saved** in Postgres (Supabase): every conversation, with its cart and checkout, survives restarts and refreshes. The sidebar lists your chats, which you can rename or delete. Each browser gets its own anonymous id, so people only see their own chats.
+- **Memory:** Rukmani remembers lasting facts about the people you shop for ("Dilini loves chocolate, allergic to nuts") and uses them in later chats. You can see and delete them under *What Rukmani remembers*. Phone numbers and addresses are never kept. Long chats are condensed into a running summary, so they stay fast and cheap.
+- **Observability:** every turn is traced in [Langfuse](https://langfuse.com) (model calls, tools, tokens, cost, per chat and per visitor). Prompts can be edited in Langfuse without a redeploy.
+- **Built for a public demo:** rate limits per visitor and per day, model fallbacks across providers, and optional Sentry error alerts.
 
 Deploying it: see [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
@@ -83,7 +86,8 @@ npm run dev
 
 ## Tech stack
 
-- **Backend:** Python 3.11 · FastAPI · LangGraph (SQLite checkpointer) · LangChain (OpenAI, Groq) · MCP Python SDK · Pydantic · loguru · Sentry · uv · pytest · ruff · Docker
+- **Backend:** Python 3.11 · FastAPI · LangGraph (Postgres checkpointer + store) · LangChain (OpenAI, Groq) · MCP Python SDK · Pydantic · Langfuse · loguru · Sentry · uv · pytest · ruff · Docker
+- **Infrastructure:** Google Cloud Run · Supabase Postgres · Secret Manager · Vercel · Terraform · GitHub Actions
 - **Frontend:** Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Motion · lucide-react · react-markdown
 
 ## Author

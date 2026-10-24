@@ -18,13 +18,33 @@ API docs: http://localhost:8000/docs · Health: http://localhost:8000/api/health
 
 Models are set in [`config/models.yaml`](config/models.yaml) as profiles:
 
-| Profile | Primary → fallbacks | Use it for |
+| Profile | Chat model → fallbacks | Use it for |
 |---|---|---|
-| `budget` (default) | Groq `gpt-oss-20b` → OpenAI `gpt-4.1-nano` | Development while credits are low. Weak Sinhala. |
+| `budget` (default) | OpenAI `gpt-5.4-nano` → Groq `gpt-oss-20b` | Development while credits are low. Weaker Sinhala. |
 | `balanced` | OpenAI `gpt-5.4-mini` → Groq `gpt-oss-120b` | Real testing and demos. Good Sinhala. |
 | `best` | OpenAI `gpt-5.5` → `gpt-5.4-mini` → Groq `gpt-oss-120b` | Judging day. |
 
+Each profile also has a cheaper **utility** model for background jobs (memory extraction, chat summaries).
 Switch with `active_profile` in the YAML, or `MODEL_PROFILE=balanced` in `.env`.
+
+## Storage, memory and tracing
+
+- **`DATABASE_URL`** (Postgres, e.g. Supabase's *session pooler* URL on port 5432) stores every chat's
+  messages, cart and checkout (LangGraph checkpointer), the chat list, and long-term memory (LangGraph store).
+  Tables are created on startup. Without it, everything lives in memory and is lost on restart.
+- **Long-term memory** (`memory/`): after each message, a utility model picks out lasting facts
+  ("Dilini loves chocolate") in parallel with the reply. Facts are scored by recency, repetition and
+  whether the customer asked to remember them; near-duplicates merge, phone numbers and emails are
+  refused, and the top ones are given to Rukmani in later chats. Visitors can list and delete them
+  (`GET/DELETE /api/memory`).
+- **Short-term memory:** after 40 messages, older ones are folded into a running summary and the last
+  16 are kept, cut at a customer message so tool calls are never split.
+- **Langfuse** (`LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY`): every turn is one trace, grouped by chat
+  (session) and visitor (user). Prompts named `rukmani-persona`, `rukmani-memory-extract` and
+  `rukmani-conversation-summary` in Langfuse override the code versions (cached 5 minutes), so you can
+  tune them without a redeploy. If Langfuse is down or a prompt is missing, the code version is used.
+- **Visitors are anonymous:** the browser sends a random `X-Visitor-Id`; chats and memory are scoped to it,
+  and other visitors' chats return 404.
 
 ## Check it
 
@@ -42,8 +62,11 @@ Dependencies point one way only: `api → agent → kapruka`.
 |---|---|
 | `kapruka/` | The only code that talks to Kapruka. `client.py` keeps one MCP connection open, reconnects, and caches catalogue answers. `models.py` holds typed views of Kapruka's JSON. `orders.py` holds the cart, checkout and `place_order`. |
 | `config/models.yaml` | Model profiles: which model Rukmani uses, with fallbacks. |
-| `agent/` | `prompts.py` (Rukmani's persona), `language.py` (detects Sinhala/Tamil/Singlish/Tanglish/English), `tools.py` (catalogue, tracking, overseas stores), `cart_tools.py` (cart + checkout), `state.py` (cart/checkout/order per conversation), `persistence.py` (SQLite storage), `llm.py` (model from the active profile, with logged fallbacks), `graph.py` (the LangGraph loop). |
-| `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `checkout.py` (places the order after Confirm), `events.py` (agent run → UI events), `limits.py` (rate limits), `schemas.py` (request bodies). |
+| `agent/` | `prompts.py` (Rukmani's persona + system prompt), `language.py` (detects Sinhala/Tamil/Singlish/Tanglish/English), `tools.py` (catalogue, tracking, overseas stores), `cart_tools.py` (cart + checkout), `state.py` (cart/checkout/order/summary per conversation), `llm.py` (chat and utility models from the active profile, with logged fallbacks), `graph.py` (the LangGraph loop, memory recall, summaries), `service.py` (runs a turn with tracing and memory extraction). |
+| `memory/` | Long-term facts (`book.py`, `policies.py`, `extractor.py`), chat summaries (`summarizer.py`), and their prompts. |
+| `storage/` | `database.py` (Postgres checkpointer + store, or in-memory), `chats.py` (the chat list). |
+| `observability.py` | Langfuse tracing and prompt management (off without keys). |
+| `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `deps.py` (visitor id, chat ownership), `history.py` (saved chat → UI messages), `checkout.py` (places the order after Confirm), `events.py` (agent run → UI events), `limits.py` (rate limits), `schemas.py` (request/response bodies). |
 
 ## Tools Rukmani can use
 
@@ -71,7 +94,8 @@ Dependencies point one way only: `api → agent → kapruka`.
 - **The reply language is detected in code** (`language.py`) and given to the model, because models often confuse Singlish with Tanglish.
 - **Catalogue answers are cached for 10 minutes.** Kapruka allows 60 requests/min per IP, and every visitor shares our server's IP.
 - **Public-demo protection:** per-visitor and daily message limits, at most 16 steps per message, and friendly errors instead of empty replies (`limits.py`, `config.py`).
-- **Conversations are saved in SQLite** (`CONVERSATIONS_DB`, default `data/conversations.sqlite`), so they survive restarts. On a host, mount a volume at `/data` (see `../DEPLOYMENT.md`).
+- **Conversations are saved in Postgres**, not on the server's disk, so a cart survives Cloud Run scaling to zero or replacing the instance.
+- **Rukmani never assumes gender or family terms** ("akka", "aiyya"), and her picks must suit the recipient (no "For Him" gifts for a wife).
 - **Model fallbacks are logged**, so a failing primary model can never hide behind the fallback.
 
 ## Deploy
