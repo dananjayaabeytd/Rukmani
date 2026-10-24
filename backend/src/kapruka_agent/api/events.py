@@ -33,9 +33,12 @@ _TOOL_LABELS = {
     "remove_from_cart": "Updating your cart",
     "prepare_checkout": "Preparing your checkout",
     "track_order": "Tracking your order",
+    "list_gift_countries": "Checking overseas gift stores",
+    "browse_gift_store": "Browsing the overseas gift store",
 }
 
 _ERROR_MESSAGE = "Sorry, something went wrong on my side. Please try again."
+_EMPTY_REPLY_MESSAGE = "Sorry, I lost my words there. Could you ask that again?"
 
 
 def _event(event_type: str, **data: Any) -> dict[str, str]:
@@ -53,6 +56,7 @@ async def stream_agent_events(
     """
     config = {"configurable": {"thread_id": thread_id}, "recursion_limit": max_steps}
     inputs = {"messages": [HumanMessage(message)]}
+    shown_anything = False  # did the customer get any text or card?
 
     try:
         # "messages" mode gives the reply token by token; "updates" mode gives
@@ -70,10 +74,17 @@ async def stream_agent_events(
                     and isinstance(chunk, AIMessage)
                     and chunk.text
                 ):
+                    shown_anything = True
                     yield _event("token", text=chunk.text)
             else:
                 for event in _events_from_update(payload):
+                    shown_anything = True
                     yield event
+
+        if not shown_anything:
+            # Never leave the customer looking at an empty reply.
+            logger.warning("Empty reply for thread {}", thread_id)
+            yield _event("error", message=_EMPTY_REPLY_MESSAGE)
         yield _event("done")
     except Exception:
         logger.exception("Agent run failed for thread {}", thread_id)

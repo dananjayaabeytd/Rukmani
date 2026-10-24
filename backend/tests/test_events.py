@@ -53,3 +53,11 @@ async def test_stream_emits_tool_artifact_tokens_and_done(fake_kapruka):
         "Here are three lovely cakes!"
     )
     assert types[-1] == "done"
+
+
+async def test_an_empty_reply_becomes_a_friendly_error(fake_kapruka):
+    agent = build_agent(ScriptedChatModel(replies=iter([AIMessage("")])), build_tools(fake_kapruka))
+
+    events = [json.loads(e["data"]) async for e in stream_agent_events(agent, "thread-456", "hi")]
+
+    assert [e["type"] for e in events] == ["error", "done"]
