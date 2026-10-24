@@ -15,13 +15,17 @@
 
 Rukmani is a chat shopping assistant for [Kapruka.com](https://www.kapruka.com), Sri Lanka's largest online gift shop. She helps customers go from "I'm not sure what to send" to a gift that fits:
 
-- Talks in **Sinhala, Singlish/Tanglish or English**, matching the customer.
+- Talks in **Sinhala, Tamil, Singlish, Tanglish or English**, matching the customer. The whole interface switches between **English, සිංහල and தமிழ்**.
 - Searches the **live Kapruka catalogue** and shows products as cards.
 - Suggests **3 picks** with a reason for each: a safe pick, a "wow" pick and a budget pick.
-- Checks **delivery to the customer's city and date**, including the fee and the next available date.
+- Checks **delivery to the customer's city and date**: fee, next available date, and a tap-to-check **date picker**. It plans around deadlines ("her birthday is Friday") and keeps cakes and flowers fresh.
 - Builds a **multi-item cart**, with icing text for cakes.
 - Writes the **gift card message** in the customer's language and shows a preview of the card.
-- Shows a **checkout summary** with the exact total. On **Confirm**, it creates a real Kapruka order and gives a pay link.
+- Shows a **checkout summary** with the exact total. On **Confirm**, it creates a real Kapruka order and gives a pay link, revealed with a little gift-unboxing moment.
+- Offers the cheaper **economy delivery** when Kapruka allows it.
+- Sends **gifts abroad** through Kapruka's overseas stores (USA, UK, Canada, Australia, UAE, and more).
+- **Tracks paid orders** with a progress timeline.
+- Highlights the **next Sri Lankan gifting occasion** on the welcome screen (Christmas, Avurudu, Mother's Day, and others).
 
 Everything comes from Kapruka's real data through the Kapruka MCP server (`https://mcp.kapruka.com/mcp`). Rukmani never invents products, prices or delivery dates.
 
@@ -43,13 +47,17 @@ Browser (chat UI)
 FastAPI
    ▼
 LangGraph agent (Rukmani)  ⇄  tools: search, product details, city lookup, delivery check,
-   │                               add / update / remove cart items, prepare checkout
+   │                               cart (add / update / remove), prepare checkout,
+   │                               order tracking, overseas gift stores
    ▼
 Kapruka MCP client  →  mcp.kapruka.com/mcp
 ```
 
 - **The agent cannot place orders by itself.** It prepares a summary; only the customer's Confirm click calls `POST /api/checkout`, which creates the order.
 - **Models are swappable profiles** (`budget`, `balanced`, `best`) in [`backend/config/models.yaml`](backend/config/models.yaml), using OpenAI and Groq.
+- **Built for a public demo:** rate limits per visitor and per day, conversations saved in SQLite (they survive restarts and page refreshes), and optional Sentry error alerts.
+
+Deploying it: see [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## Quick start
 
@@ -71,7 +79,7 @@ npm run dev
 
 ## Tech stack
 
-- **Backend:** Python 3.11 · FastAPI · LangGraph · LangChain (OpenAI, Groq) · MCP Python SDK · Pydantic · loguru · uv · pytest · ruff
+- **Backend:** Python 3.11 · FastAPI · LangGraph (SQLite checkpointer) · LangChain (OpenAI, Groq) · MCP Python SDK · Pydantic · loguru · Sentry · uv · pytest · ruff · Docker
 - **Frontend:** Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Motion · lucide-react · react-markdown
 
 ## Author

@@ -22,11 +22,19 @@ Checks: `npm run lint` · `npx tsc --noEmit` · `npm run build`
 | `app/` | Page, root layout (fonts, metadata) and `globals.css` (Kapruka colour tokens). |
 | `lib/types.ts` | Types shared with the backend. Keep in sync with the backend's `models.py` and `events.py`. |
 | `lib/api.ts` | `streamChat` (`POST /api/chat`, parses the Server-Sent Events reply) and `confirmCheckout` (`POST /api/checkout`). |
+| `lib/i18n.ts` | Every interface string in English, Sinhala and Tamil. |
+| `lib/occasions.ts` | Sri Lankan gifting occasions for the "coming up soon" banner. |
+| `lib/storage.ts` | Keeps the conversation in the browser so a refresh doesn't lose it. |
 | `hooks/useChat.ts` | Conversation state: applies each stream event to Rukmani's reply. |
-| `components/chat/` | Screen layout: header with cart, welcome screen, messages, status pill, message box, cart drawer. `ChatActions.tsx` shares actions like "send" with the cards. |
-| `components/cards/` | What tools produced: product carousel, product details, delivery check, cart, checkout summary (with gift card preview) and the pay-link card. |
+| `components/LanguageProvider.tsx` | The chosen interface language (remembered in the browser). |
+| `components/chat/` | Screen layout: header (language switch, cart), welcome screen with occasion banner, messages, status pill, message box, cart drawer. `ChatActions.tsx` shares actions like "send" with the cards. |
+| `components/cards/` | What tools produced: product carousel, product details, delivery check with date picker, cart, checkout summary (with gift card preview), gift unboxing + pay-link card, and order tracking. |
 
-Cart changes from the UI ("Add to cart", remove in the drawer) are sent to Rukmani as messages, so she always knows the cart. Only the **Confirm** button on the checkout summary places an order.
+Cart changes from the UI ("Add to cart", remove in the drawer, a date in the date picker) are sent to Rukmani as messages in the chosen language, so she always knows the cart and answers in that language. Only the **Confirm** button on the checkout summary places an order.
+
+## Languages
+
+Switch with **EN / සිං / தமிழ்** in the header. To add or change a string, edit `lib/i18n.ts`. The `Strings` type makes TypeScript point out any language that's missing it.
 
 ## Brand colours
 
@@ -40,4 +48,4 @@ Taken from kapruka.com's stylesheet and logo, defined once in `app/globals.css` 
 | `brand-tint` / `brand-mist` | `#f9f7ff` / `#edf0f8` | Page and card backgrounds |
 | `ink` / `ink-soft` | `#111111` / `#3a3b3c` | Text |
 
-Fonts: Roboto (Kapruka's font) with Noto Sans Sinhala for Sinhala script.
+Fonts: Roboto (Kapruka's font) with Noto Sans Sinhala and Noto Sans Tamil for those scripts.

@@ -42,13 +42,24 @@ Dependencies point one way only: `api → agent → kapruka`.
 |---|---|
 | `kapruka/` | The only code that talks to Kapruka. `client.py` keeps one MCP connection open, reconnects, and caches catalogue answers. `models.py` holds typed views of Kapruka's JSON. `orders.py` holds the cart, checkout and `place_order`. |
 | `config/models.yaml` | Model profiles: which model Rukmani uses, with fallbacks. |
-| `agent/` | `prompts.py` (Rukmani's persona), `tools.py` (catalogue tools), `cart_tools.py` (cart + checkout tools), `state.py` (cart/checkout/order saved per conversation), `llm.py` (builds the model from the active profile), `graph.py` (the LangGraph loop). |
-| `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `checkout.py` (places the order after Confirm), `events.py` (agent run → UI events), `schemas.py` (request bodies). |
+| `agent/` | `prompts.py` (Rukmani's persona), `language.py` (detects Sinhala/Tamil/Singlish/Tanglish/English), `tools.py` (catalogue, tracking, overseas stores), `cart_tools.py` (cart + checkout), `state.py` (cart/checkout/order per conversation), `persistence.py` (SQLite storage), `llm.py` (model from the active profile, with logged fallbacks), `graph.py` (the LangGraph loop). |
+| `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `checkout.py` (places the order after Confirm), `events.py` (agent run → UI events), `limits.py` (rate limits), `schemas.py` (request bodies). |
+
+## Tools Rukmani can use
+
+| Tool | What it does |
+|---|---|
+| `search_products`, `get_product_details` | Live Kapruka catalogue |
+| `find_delivery_city`, `check_delivery` | Kapruka's city spelling; date, fee and next available date |
+| `add_to_cart`, `update_cart_item`, `remove_from_cart` | Multi-item cart with icing text |
+| `prepare_checkout` | Exact fee for the whole cart, economy option, summary card with Confirm |
+| `track_order` | Progress of a paid order (recipient phone/address are not shown) |
+| `list_gift_countries`, `browse_gift_store` | Kapruka's overseas gift stores |
 
 ## How checkout works
 
-1. Rukmani adds items with `add_to_cart` / `update_cart_item` / `remove_from_cart`. The cart is saved in the conversation state.
-2. With the recipient, address, date and gift message, she calls `prepare_checkout`. It checks delivery **with the whole cart**, which gives the exact fee, and shows a summary card with a **Confirm** button.
+1. Rukmani adds items with `add_to_cart` / `update_cart_item` / `remove_from_cart`. The cart is saved in the conversation state. A cart is either all for Sri Lanka or all from one overseas store.
+2. With the recipient, address, date and gift message, she calls `prepare_checkout`. It checks delivery **with the whole cart**, which gives the exact fee, offers economy delivery when available, and shows a summary card with a **Confirm** button.
 3. Only that button calls `POST /api/checkout`, which creates the real Kapruka order and returns the pay link (valid 60 minutes).
 
 ## Design decisions
@@ -57,5 +68,12 @@ Dependencies point one way only: `api → agent → kapruka`.
 - **Any cart change cancels a pending checkout**, so the customer never confirms a summary that no longer matches the cart.
 - **One tool call at a time** (`parallel_tool_calls=False`), so two cart changes can't overwrite each other.
 - **Each tool returns two things:** a small summary for the model and full data for the UI. That keeps model tokens low and the cards rich.
+- **The reply language is detected in code** (`language.py`) and given to the model, because models often confuse Singlish with Tanglish.
 - **Catalogue answers are cached for 10 minutes.** Kapruka allows 60 requests/min per IP, and every visitor shares our server's IP.
-- **Conversations are kept in memory** (`InMemorySaver`), so they are lost on restart. To keep them across restarts, switch to a SQLite or Postgres checkpointer in `graph.py`.
+- **Public-demo protection:** per-visitor and daily message limits, at most 16 steps per message, and friendly errors instead of empty replies (`limits.py`, `config.py`).
+- **Conversations are saved in SQLite** (`CONVERSATIONS_DB`, default `data/conversations.sqlite`), so they survive restarts. On a host, mount a volume at `/data` (see `../DEPLOYMENT.md`).
+- **Model fallbacks are logged**, so a failing primary model can never hide behind the fallback.
+
+## Deploy
+
+`Dockerfile` + `railway.json` are ready — see [`../DEPLOYMENT.md`](../DEPLOYMENT.md). Optional error alerts: set `SENTRY_DSN`.
