@@ -48,10 +48,26 @@ class Settings(BaseSettings):
     kapruka_cache_ttl_seconds: int = 600
     kapruka_timeout_seconds: float = 20.0
 
-    # ── Conversations ──────────────────────────────────────────────
-    # SQLite file holding every conversation. On a host, put it on a
-    # persistent volume so conversations survive redeploys.
-    conversations_db: Path = BACKEND_DIR / "data" / "conversations.sqlite"
+    # ── Storage (Supabase Postgres) ────────────────────────────────
+    # Conversations, the chat list and long-term memory. Use Supabase's
+    # *session pooler* string (IPv4). Unset → kept in memory only (dev/tests).
+    database_url: SecretStr | None = None
+
+    # ── Memory ─────────────────────────────────────────────────────
+    # Long conversations: once a chat has this many messages, the older ones
+    # are summarised and only the newest `keep_recent_messages` stay verbatim.
+    summarize_after_messages: int = 40
+    keep_recent_messages: int = 16
+    # Long-term facts kept per visitor (lowest-scoring ones are dropped).
+    max_memory_facts: int = 30
+    # Facts shown to Rukmani each turn (highest-scoring first).
+    recalled_memory_facts: int = 12
+
+    # ── Langfuse (optional): tracing + prompt management ───────────
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: SecretStr | None = None
+    langfuse_base_url: str = "https://cloud.langfuse.com"
+    environment: str = "development"  # shown on traces: development / production
 
     # ── Protection against abuse and runaway cost ──────────────────
     chat_messages_per_10_minutes: int = 30  # per visitor IP
