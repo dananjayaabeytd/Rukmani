@@ -32,6 +32,7 @@ _TOOL_LABELS = {
     "update_cart_item": "Updating your cart",
     "remove_from_cart": "Updating your cart",
     "prepare_checkout": "Preparing your checkout",
+    "track_order": "Tracking your order",
 }
 
 _ERROR_MESSAGE = "Sorry, something went wrong on my side. Please try again."

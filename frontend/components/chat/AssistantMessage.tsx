@@ -8,6 +8,7 @@ import { CheckoutCard } from "@/components/cards/CheckoutCard";
 import { DeliveryCard } from "@/components/cards/DeliveryCard";
 import { ProductCarousel } from "@/components/cards/ProductCarousel";
 import { ProductDetailCard } from "@/components/cards/ProductDetailCard";
+import { TrackingCard } from "@/components/cards/TrackingCard";
 import { useChatActions } from "./ChatActions";
 import { RukmaniAvatar } from "./RukmaniAvatar";
 import { StatusPill } from "./StatusPill";
@@ -73,5 +74,7 @@ function ArtifactView({ artifact, artifactKey }: { artifact: Artifact; artifactK
       return <CartCard cart={artifact.cart} total={artifact.total} />;
     case "checkout":
       return <CheckoutCard quote={artifact.quote} isLatest={artifactKey === latestCheckoutKey} />;
+    case "tracking":
+      return <TrackingCard order={artifact.order} />;
   }
 }

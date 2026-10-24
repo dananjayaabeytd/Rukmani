@@ -23,7 +23,13 @@ from langchain_core.tools import BaseTool, tool
 
 from kapruka_agent.agent.cart_tools import build_cart_tools
 from kapruka_agent.kapruka import KaprukaClient, KaprukaError
-from kapruka_agent.kapruka.models import City, DeliveryCheck, ProductCard, ProductDetail
+from kapruka_agent.kapruka.models import (
+    City,
+    DeliveryCheck,
+    OrderStatus,
+    ProductCard,
+    ProductDetail,
+)
 
 # How many search results to show as cards in one reply.
 _SEARCH_LIMIT = 8
@@ -153,5 +159,33 @@ def build_tools(kapruka: KaprukaClient) -> list[BaseTool]:
         artifact = {"kind": "delivery", "product_id": product_id, "delivery": check.model_dump()}
         return _to_json(check.for_llm()), artifact
 
-    catalogue_tools = [search_products, get_product_details, find_delivery_city, check_delivery]
+    @tool(response_format="content_and_artifact")
+    async def track_order(order_number: str) -> ToolResult:
+        """Look up where a PAID order is: status, delivery progress and items.
+
+        Args:
+            order_number: The Kapruka order number from the customer's confirmation email
+                (e.g. "VIMP34456CB2"). NOT the "ORD-..." reference shown before payment.
+        """
+        if order_number.upper().startswith("ORD-"):
+            return (
+                "That is the pre-payment reference. After paying, Kapruka emails an order "
+                "number (like VIMP34456CB2) — ask the customer for that one.",
+                None,
+            )
+        try:
+            data = await kapruka.call("kapruka_track_order", order_number=order_number)
+        except KaprukaError as exc:
+            return str(exc), None
+
+        status = OrderStatus.from_api(data)
+        return _to_json(status.for_llm()), {"kind": "tracking", "order": status.model_dump()}
+
+    catalogue_tools = [
+        search_products,
+        get_product_details,
+        find_delivery_city,
+        check_delivery,
+        track_order,
+    ]
     return [*catalogue_tools, *build_cart_tools(kapruka)]

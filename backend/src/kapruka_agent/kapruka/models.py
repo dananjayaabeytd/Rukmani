@@ -93,6 +93,58 @@ class City(BaseModel):
     aliases: list[str] = Field(default_factory=list)
 
 
+class OrderProgressStep(BaseModel):
+    step: str
+    timestamp: str | None = None
+
+
+class OrderStatusItem(BaseModel):
+    name: str
+    quantity: int = 1
+
+
+class OrderStatus(BaseModel):
+    """Where a paid order is now (from kapruka_track_order).
+
+    Kapruka also returns the recipient's phone number and street address. We
+    deliberately don't keep them: anyone who knows an order number could ask,
+    so only the recipient's name and city are shown.
+    """
+
+    order_number: str
+    status: str  # received | confirmed | shipped | delivered | cancelled | ...
+    status_display: str
+    order_date: str | None = None
+    delivery_date: str | None = None
+    shipped_date: str | None = None
+    recipient_name: str | None = None
+    recipient_city: str | None = None
+    progress: list[OrderProgressStep] = Field(default_factory=list)
+    items: list[OrderStatusItem] = Field(default_factory=list)
+    has_delivery_photo: bool = False
+
+    @classmethod
+    def from_api(cls, data: dict[str, Any]) -> "OrderStatus":
+        recipient = data.get("recipient") or {}
+        return cls.model_validate(
+            {
+                **data,
+                "recipient_name": recipient.get("name"),
+                "recipient_city": recipient.get("city"),
+            }
+        )
+
+    def for_llm(self) -> dict[str, Any]:
+        return {
+            "order_number": self.order_number,
+            "status": self.status_display,
+            "delivery_date": self.delivery_date,
+            "latest_step": self.progress[-1].step if self.progress else None,
+            "items": [f"{i.quantity} × {i.name}" for i in self.items],
+            "delivery_photo_available": self.has_delivery_photo,
+        }
+
+
 class DeliveryCheck(BaseModel):
     """Whether Kapruka can deliver to a city on a date, and the fee."""
 

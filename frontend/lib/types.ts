@@ -95,6 +95,21 @@ export interface Order {
   expires_at: string; // ISO 8601 — the pay link stops working after this
 }
 
+/** A paid order's progress (recipient phone/address are deliberately not included). */
+export interface OrderStatus {
+  order_number: string;
+  status: string; // received | confirmed | shipped | delivered | cancelled | ...
+  status_display: string;
+  order_date: string | null;
+  delivery_date: string | null;
+  shipped_date: string | null;
+  recipient_name: string | null;
+  recipient_city: string | null;
+  progress: { step: string; timestamp: string | null }[];
+  items: { name: string; quantity: number }[];
+  has_delivery_photo: boolean;
+}
+
 // ── Artifacts: data a tool produced for the UI to show ───────────────
 
 export type Artifact =
@@ -102,7 +117,8 @@ export type Artifact =
   | { kind: "product_detail"; product: ProductDetail }
   | { kind: "delivery"; product_id: string | null; delivery: DeliveryCheck }
   | { kind: "cart"; cart: Cart; total: Money }
-  | { kind: "checkout"; quote: CheckoutQuote };
+  | { kind: "checkout"; quote: CheckoutQuote }
+  | { kind: "tracking"; order: OrderStatus };
 
 // ── Events streamed from POST /api/chat ──────────────────────────────
 
