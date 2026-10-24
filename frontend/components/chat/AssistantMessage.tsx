@@ -3,9 +3,12 @@
 import { motion } from "motion/react";
 import Markdown from "react-markdown";
 import type { Artifact, ChatMessage } from "@/lib/types";
+import { CartCard } from "@/components/cards/CartCard";
+import { CheckoutCard } from "@/components/cards/CheckoutCard";
 import { DeliveryCard } from "@/components/cards/DeliveryCard";
 import { ProductCarousel } from "@/components/cards/ProductCarousel";
 import { ProductDetailCard } from "@/components/cards/ProductDetailCard";
+import { useChatActions } from "./ChatActions";
 import { RukmaniAvatar } from "./RukmaniAvatar";
 import { StatusPill } from "./StatusPill";
 
@@ -24,7 +27,7 @@ export function AssistantMessage({ message }: { message: ChatMessage }) {
 
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         {message.artifacts.map((artifact, index) => (
-          <ArtifactView key={index} artifact={artifact} />
+          <ArtifactView key={index} artifact={artifact} artifactKey={`${message.id}:${index}`} />
         ))}
 
         {message.text && (
@@ -56,7 +59,9 @@ export function AssistantMessage({ message }: { message: ChatMessage }) {
 }
 
 /** Pick the right card for each kind of tool result. */
-function ArtifactView({ artifact }: { artifact: Artifact }) {
+function ArtifactView({ artifact, artifactKey }: { artifact: Artifact; artifactKey: string }) {
+  const { latestCheckoutKey } = useChatActions();
+
   switch (artifact.kind) {
     case "products":
       return <ProductCarousel products={artifact.products} />;
@@ -64,5 +69,9 @@ function ArtifactView({ artifact }: { artifact: Artifact }) {
       return <ProductDetailCard product={artifact.product} />;
     case "delivery":
       return <DeliveryCard delivery={artifact.delivery} />;
+    case "cart":
+      return <CartCard cart={artifact.cart} total={artifact.total} />;
+    case "checkout":
+      return <CheckoutCard quote={artifact.quote} isLatest={artifactKey === latestCheckoutKey} />;
   }
 }

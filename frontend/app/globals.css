@@ -13,6 +13,7 @@
   --color-brand-muted: #9c90b5;  /* soft purple for borders and hints */
   --color-brand-tint: #f9f7ff;   /* page background (light lavender) */
   --color-brand-mist: #edf0f8;   /* card backgrounds, chips */
+  --color-cream: #fffef2;        /* warm paper colour — the gift card preview */
   --color-sun: #f8da08;          /* the yellow "smile" in the logo — highlights */
   --color-gold: #ffb800;         /* badges such as "only a few left" */
   --color-ink: #111111;          /* main text */
