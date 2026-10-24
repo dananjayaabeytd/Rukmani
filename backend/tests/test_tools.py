@@ -3,6 +3,7 @@
 import json
 
 from kapruka_agent.agent.tools import build_tools
+from kapruka_agent.kapruka.models import DeliveryCheck
 
 
 def _tools_by_name(kapruka):
@@ -47,3 +48,19 @@ async def test_kapruka_error_is_returned_as_text(fake_kapruka):
     result = await tool.ainvoke({"name": "Kandy"})
 
     assert result == "Error: service busy"
+
+
+def test_perishable_warning_hides_the_product_code():
+    check = DeliveryCheck(
+        city="Kandy",
+        checked_date="2026-10-29",
+        available=True,
+        perishable_warning=(
+            "Note: Product `CAKE00KA001562` looks like a perishable item (cake/flower/combo). "
+            "Same-day or next-day delivery is recommended; freshness on 2026-10-29 is not "
+            "guaranteed."
+        ),
+    )
+
+    assert check.perishable_warning.startswith("This is a fresh item. Same-day or next-day")
+    assert "CAKE00KA001562" not in check.perishable_warning

@@ -10,9 +10,10 @@ Each model has two outputs:
     - ``for_llm()``     a small summary for the model, to save tokens
 """
 
+import re
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class Money(BaseModel):
@@ -160,6 +161,23 @@ class DeliveryCheck(BaseModel):
     item_deliverable: bool | None = None  # only present when a product was checked
     deliverable_cities: list[str] = Field(default_factory=list)
     perishable_warning: str | None = None
+
+    @field_validator("perishable_warning")
+    @classmethod
+    def _readable_warning(cls, warning: str | None) -> str | None:
+        """Make Kapruka's warning customer-friendly. It reads like:
+        "Note: Product `CAKE00KA001562` looks like a perishable item (cake/flower/combo).
+        Same-day or next-day delivery is recommended; ..." — the code means nothing to people.
+        """
+        if not warning:
+            return warning
+        warning = re.sub(r"^Note:\s*", "", warning)
+        warning = re.sub(
+            r"Product `?[\w-]+`? looks like a perishable item(?: \([^)]*\))?\.",
+            "This is a fresh item.",
+            warning,
+        )
+        return re.sub(r"Product `?[\w-]+`?", "This item", warning)  # any other wording
 
     def for_llm(self) -> dict[str, Any]:
         summary = self.model_dump(
