@@ -24,3 +24,9 @@ Thumbs.db
 
 # Backend conversation database (local SQLite file)
 backend/data/
+
+# Terraform (local working files; state lives in Cloud Storage)
+infra/.terraform/
+*.tfstate
+*.tfstate.*
+infra/.env
