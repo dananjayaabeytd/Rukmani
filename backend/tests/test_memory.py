@@ -55,6 +55,9 @@ def test_contact_details_are_never_kept():
 def test_button_messages_and_short_replies_are_skipped():
     assert not policies.worth_extracting("ok thanks")
     assert not policies.worth_extracting('Add "Rose Bouquet" (FLOWER1) to my cart')
+    assert not policies.worth_extracting('"Rose Bouquet" (FLOWER1) කරත්තයට දාන්න')
+    assert not policies.worth_extracting("Can you deliver to Kandy on 2026-10-25 (CAKE1)?")
+    assert not policies.worth_extracting("I'm ready to check out")
     assert policies.worth_extracting("It's for my wife, she is 25 and loves chocolate")
 
 

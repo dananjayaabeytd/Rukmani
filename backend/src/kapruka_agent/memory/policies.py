@@ -20,7 +20,14 @@ _DUPLICATE_SIMILARITY = 0.82
 
 _PHONE = re.compile(r"(?:\+?\d[\s-]?){7,}")
 _EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
-_BUTTON_MESSAGES = re.compile(r'^(Add ".+" \(.+\) to my cart|Remove ".+" \(.+\) from my cart)$')
+
+# Messages the UI's buttons send for the customer (frontend/lib/i18n.ts, in
+# every language). They never contain anything worth remembering.
+_BUTTON_MESSAGES = re.compile(
+    r'"[^"]+" \([^)]+\)'  # Add / Remove buttons: "Product name" (ID)
+    r"|\b\d{4}-\d{2}-\d{2}\b"  # date picker: "Can you deliver to Kandy on 2026-10-25?"
+)
+_CHECKOUT_BUTTONS = {"I'm ready to check out", "මම checkout කරන්න ලෑස්තියි", "நான் checkout செய்யத் தயார்"}
 
 
 def score(fact: MemoryFact, now: float) -> float:
@@ -47,6 +54,13 @@ def is_too_sensitive(text: str) -> bool:
 
 
 def worth_extracting(message: str) -> bool:
-    """Only look for facts in real sentences, not 'ok' or button messages."""
+    """Only look for facts in real sentences, not 'ok' or button messages.
+
+    Each skipped message saves one call to the utility model.
+    """
     message = message.strip()
-    return len(message.split()) >= 4 and not _BUTTON_MESSAGES.match(message)
+    return (
+        len(message.split()) >= 4
+        and message not in _CHECKOUT_BUTTONS
+        and not _BUTTON_MESSAGES.search(message)
+    )
