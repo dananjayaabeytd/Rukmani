@@ -28,6 +28,10 @@ _TOOL_LABELS = {
     "get_product_details": "Looking at the product details",
     "find_delivery_city": "Finding the delivery city",
     "check_delivery": "Checking delivery date and fee",
+    "add_to_cart": "Adding to your cart",
+    "update_cart_item": "Updating your cart",
+    "remove_from_cart": "Updating your cart",
+    "prepare_checkout": "Preparing your checkout",
 }
 
 _ERROR_MESSAGE = "Sorry, something went wrong on my side. Please try again."
@@ -75,9 +79,10 @@ def _events_from_update(update: dict[str, Any]) -> list[dict[str, str]]:
     """Map one finished graph step to UI events."""
     events = []
     for node_output in update.values():
-        if not isinstance(node_output, dict):
-            continue  # e.g. interrupt markers — nothing to show yet
-        for msg in node_output.get("messages", []):
+        # A node usually returns one dict; tools returning Commands may give a list.
+        outputs = node_output if isinstance(node_output, list) else [node_output]
+        messages = [m for out in outputs if isinstance(out, dict) for m in out.get("messages", [])]
+        for msg in messages:
             if isinstance(msg, AIMessage):
                 for call in msg.tool_calls:
                     label = _TOOL_LABELS.get(call["name"], "Working on it")

@@ -84,7 +84,9 @@ def build_chat_model(settings: Settings, tools: Sequence[BaseTool]) -> ChatModel
     for spec in [profile.primary, *profile.fallbacks]:
         model = _create_model(spec, settings)
         if model is not None:
-            models.append(model.bind_tools(tools))
+            # One tool call at a time: two cart tools running in parallel would
+            # both edit the same cart and one change would be lost.
+            models.append(model.bind_tools(tools, parallel_tool_calls=False))
             labels.append(spec.label())
 
     if not models:

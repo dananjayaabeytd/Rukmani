@@ -11,8 +11,9 @@ Each tool wraps one Kapruka MCP call and returns TWO things
 Tools never raise. If Kapruka fails or finds nothing, the tool returns the
 reason as text so the model can explain it or try something else.
 
-Placing orders is deliberately NOT a tool: the customer confirms checkout
-in the UI, so the model can never create an order by itself.
+Cart and checkout tools live in ``cart_tools.py``. Placing orders is
+deliberately NOT a tool: the customer confirms checkout in the UI, so the
+model can never create an order by itself.
 """
 
 import json
@@ -20,6 +21,7 @@ from typing import Any, Literal
 
 from langchain_core.tools import BaseTool, tool
 
+from kapruka_agent.agent.cart_tools import build_cart_tools
 from kapruka_agent.kapruka import KaprukaClient, KaprukaError
 from kapruka_agent.kapruka.models import City, DeliveryCheck, ProductCard, ProductDetail
 
@@ -151,4 +153,5 @@ def build_tools(kapruka: KaprukaClient) -> list[BaseTool]:
         artifact = {"kind": "delivery", "product_id": product_id, "delivery": check.model_dump()}
         return _to_json(check.for_llm()), artifact
 
-    return [search_products, get_product_details, find_delivery_city, check_delivery]
+    catalogue_tools = [search_products, get_product_details, find_delivery_city, check_delivery]
+    return [*catalogue_tools, *build_cart_tools(kapruka)]

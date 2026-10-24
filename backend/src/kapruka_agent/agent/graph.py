@@ -14,8 +14,9 @@ It is the standard tool-calling loop:
     tools   Runs the requested tools and adds their results to the
             conversation, then hands back to the agent.
 
-Conversations are saved per ``thread_id`` by the checkpointer, so each
-request only needs to send the newest message.
+Conversations (messages, cart, checkout, order — see ``state.py``) are
+saved per ``thread_id`` by the checkpointer, so each request only needs to
+send the newest message.
 """
 
 from collections.abc import Sequence
@@ -25,12 +26,13 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph import START, MessagesState, StateGraph
+from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from kapruka_agent.agent.llm import ChatModel
 from kapruka_agent.agent.prompts import build_system_prompt
+from kapruka_agent.agent.state import AgentState, get_cart, get_checkout, get_order
 
 # Only the most recent messages are sent to the model, to keep each turn
 # fast and cheap. The full conversation stays in the checkpointer.
@@ -51,12 +53,17 @@ def build_agent(
             which is lost on restart.
     """
 
-    async def agent_node(state: MessagesState, config: RunnableConfig) -> dict:
+    async def agent_node(state: AgentState, config: RunnableConfig) -> dict:
+        # The prompt includes the current cart/checkout/order so Rukmani always
+        # knows them, even after older messages are trimmed from the history.
+        system = build_system_prompt(
+            cart=get_cart(state), checkout=get_checkout(state), order=get_order(state)
+        )
         history = _recent_history(state["messages"])
-        response = await model.ainvoke([SystemMessage(build_system_prompt()), *history], config)
+        response = await model.ainvoke([SystemMessage(system), *history], config)
         return {"messages": [response]}
 
-    graph = StateGraph(MessagesState)
+    graph = StateGraph(AgentState)
     graph.add_node("agent", agent_node)
     graph.add_node("tools", ToolNode(tools))
     graph.add_edge(START, "agent")
