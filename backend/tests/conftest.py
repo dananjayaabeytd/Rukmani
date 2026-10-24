@@ -51,12 +51,51 @@ class FakeKapruka:
         return answer
 
 
+PRODUCT_RESULT = {
+    "id": "cake00KA001562",
+    "name": "Floral Fantasy Happy Birthday Cake",
+    "price": {"amount": 5950, "currency": "LKR"},
+    "in_stock": True,
+    "images": ["https://static2.kapruka.com/cake-large.jpg"],
+    "url": "https://www.kapruka.com/buyonline/cake",
+    "description": "A floral birthday cake.",
+}
+
+# Delivery check with a cart: exact fee, date available.
+CART_DELIVERY_RESULT = {
+    "city": "Kandy",
+    "checked_date": "2026-10-25",
+    "available": True,
+    "delivery_fee": 900,
+    "fee_currency": "LKR",
+    "fee_basis": "cart",
+}
+
+ORDER_RESULT = {
+    "checkout_url": "https://www.kapruka.com/checkout/abc123",
+    "order_ref": "ORD-20261025-0001",
+    "order_id": "991",
+    "summary": {
+        "items_total": 5950,
+        "delivery_fee": 900,
+        "addons_total": 0,
+        "grand_total": 6850,
+        "currency": "LKR",
+        "delivery_type": "standard",
+        "delivery_date": "2026-10-25",
+    },
+    "expires_at": "2026-10-24T14:00:00+05:30",
+}
+
+
 @pytest.fixture
 def fake_kapruka() -> FakeKapruka:
     return FakeKapruka(
         {
             "kapruka_search_products": SEARCH_RESULT,
+            "kapruka_get_product": PRODUCT_RESULT,
             "kapruka_check_delivery": DELIVERY_RESULT,
             "kapruka_list_delivery_cities": KaprukaError("Error: service busy"),
+            "kapruka_create_order": ORDER_RESULT,
         }
     )
