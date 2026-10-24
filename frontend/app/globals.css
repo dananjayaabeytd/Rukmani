@@ -31,6 +31,52 @@ body {
   color: var(--color-ink);
 }
 
+/*
+ * Behind the conversation: the lavender page colour with soft glows of
+ * Kapruka purple and a hint of the logo's yellow. The particles
+ * (components/chat/ParticleField.tsx) drift on top of this.
+ */
+.chat-backdrop {
+  background:
+    radial-gradient(60rem 40rem at 10% 0%, rgb(87 59 145 / 0.14), transparent 60%),
+    radial-gradient(50rem 36rem at 100% 100%, rgb(64 41 112 / 0.12), transparent 60%),
+    radial-gradient(28rem 20rem at 85% 10%, rgb(248 218 8 / 0.10), transparent 70%),
+    var(--color-brand-tint);
+}
+
+/* A slow rotating glow (Rukmani's avatar ring on the welcome screen). */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@utility animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* Light sweeping across a surface while Rukmani is working. */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@utility animate-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0.7) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.2s linear infinite;
+}
+
 /* Horizontal product carousels scroll without a visible scrollbar. */
 @utility no-scrollbar {
   scrollbar-width: none;
