@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/*
+ * Kapruka brand palette — taken from kapruka.com's own stylesheet
+ * (style_core_2025.css) and logo, so Rukmani feels like part of Kapruka.
+ * Use these as Tailwind classes, e.g. bg-brand, text-sun, border-brand-muted.
+ */
+@theme {
+  --color-brand: #402970;        /* Kapruka purple — headers, buttons, prices */
+  --color-brand-logo: #442a73;   /* exact background of the logo file — used for the header */
+  --color-brand-deep: #2c1c52;   /* pressed / hover states on purple */
+  --color-brand-light: #573b91;  /* secondary purple accents */
+  --color-brand-muted: #9c90b5;  /* soft purple for borders and hints */
+  --color-brand-tint: #f9f7ff;   /* page background (light lavender) */
+  --color-brand-mist: #edf0f8;   /* card backgrounds, chips */
+  --color-sun: #f8da08;          /* the yellow "smile" in the logo — highlights */
+  --color-gold: #ffb800;         /* badges such as "only a few left" */
+  --color-ink: #111111;          /* main text */
+  --color-ink-soft: #3a3b3c;     /* secondary text */
+  --color-success: #3fae1c;      /* darker shade of Kapruka's #63ce3a, readable on white */
+}
+
+/* Fonts are loaded in app/layout.tsx; Sinhala text falls back to Noto Sans Sinhala. */
+@theme inline {
+  --font-sans: var(--font-roboto), var(--font-sinhala), system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-brand-tint);
+  color: var(--color-ink);
+}
+
+/* Horizontal product carousels scroll without a visible scrollbar. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
