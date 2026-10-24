@@ -30,6 +30,7 @@ from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
+from kapruka_agent.agent.language import detect_language
 from kapruka_agent.agent.llm import ChatModel
 from kapruka_agent.agent.prompts import build_system_prompt
 from kapruka_agent.agent.state import AgentState, get_cart, get_checkout, get_order
@@ -57,7 +58,10 @@ def build_agent(
         # The prompt includes the current cart/checkout/order so Rukmani always
         # knows them, even after older messages are trimmed from the history.
         system = build_system_prompt(
-            cart=get_cart(state), checkout=get_checkout(state), order=get_order(state)
+            cart=get_cart(state),
+            checkout=get_checkout(state),
+            order=get_order(state),
+            reply_language=_latest_customer_language(state["messages"]),
         )
         history = _recent_history(state["messages"])
         response = await model.ainvoke([SystemMessage(system), *history], config)
@@ -96,3 +100,11 @@ def _recent_history(messages: list) -> list:
     while start > 0 and messages[start].type == "tool":
         start -= 1
     return messages[start:]
+
+
+def _latest_customer_language(messages: list) -> str | None:
+    """The language of the customer's most recent message, or None if there isn't one."""
+    for message in reversed(messages):
+        if message.type == "human":
+            return detect_language(message.text)
+    return None

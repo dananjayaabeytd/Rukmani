@@ -3,7 +3,8 @@ Rukmani's system prompt — her personality and her shopping rules.
 
 The prompt is rebuilt on every turn so it always contains:
     - today's date and time in Sri Lanka (to understand "tomorrow", and to
-      reason about same-day delivery), and
+      reason about same-day delivery),
+    - the language of the customer's latest message (detected in code), and
     - the current cart, pending checkout and placed order, so Rukmani
       always knows them even after old messages are trimmed.
 """
@@ -12,6 +13,7 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from kapruka_agent.agent.language import reply_language_instruction
 from kapruka_agent.kapruka.orders import Cart, CheckoutQuote, Order
 
 SRI_LANKA_TZ = ZoneInfo("Asia/Colombo")
@@ -34,6 +36,8 @@ You are Rukmani (රුක්මණී), the gift concierge at Kapruka, Sri Lank
 - Tamil script (தமிழ்) → natural, everyday Sri Lankan Tamil.
 - Tanglish (Tamil written in English letters) → Tanglish. You'll see words like venum,
   ku, irukku, anuppanum, maathiri, enna, thambi, akka, naalai.
+  Tanglish is TAMIL, not Sinhala: answer with Tamil words (super, nalla, irukku, venum,
+  anuppalam, endha ooru) and NEVER with Sinhala words (aney, lassanai, ona, eka, hondai).
 - Never switch Singlish or Tanglish to plain English just because the letters are English.
 - Write the WHOLE reply in that language — the reasons for each pick, labels like "safe
   pick", and your questions. Only product names stay in English, exactly as Kapruka
@@ -87,6 +91,13 @@ Example (Tanglish):
    payment link. If something needs changing, call prepare_checkout again with the fix.
 7. Order tracking: for an order they already PAID, ask for the order number from their
    Kapruka confirmation email (like VIMP34456CB2) and call track_order.
+8. Gifts abroad: if the recipient lives OUTSIDE Sri Lanka (e.g. "my sister in Dubai"),
+   use list_gift_countries and browse_gift_store — search_products only covers Sri Lanka.
+   These are delivered in that country by Kapruka's partner, at least 3 days ahead. At
+   checkout you also need the recipient's town, postcode/ZIP, their phone number there,
+   the zone (Australia and the UAE only) and the sender's email. One order = one country.
+9. Economy delivery: if prepare_checkout says a cheaper economy option exists, mention it
+   once with its fee and promise. Only use it if the customer agrees.
 
 ## Rules you never break
 - Only mention products, prices and delivery facts that came from your tools. Never invent them.
@@ -101,14 +112,17 @@ def build_system_prompt(
     cart: Cart | None = None,
     checkout: CheckoutQuote | None = None,
     order: Order | None = None,
+    reply_language: str | None = None,
     now: datetime | None = None,
 ) -> str:
-    """Return the persona prompt plus the current date and shopping state."""
+    """Return the persona prompt plus the current date, reply language and shopping state."""
     now = now or datetime.now(SRI_LANKA_TZ)
     sections = [
         _PERSONA,
         "## Right now",
         f"It is {now:%A, %d %B %Y, %I:%M %p} in Sri Lanka ({now:%Y-%m-%d}).",
+    ]
+    sections += [
         "## Cart",
         _to_json(cart.for_llm()) if cart and not cart.is_empty else "Empty.",
     ]
@@ -125,6 +139,9 @@ def build_system_prompt(
             f"{order.delivery_date}. The customer must pay with the 'Pay now' link before "
             f"{order.expires_at}. After paying, Kapruka emails them the order number.",
         ]
+    # Last, because models follow the end of the prompt most closely.
+    if reply_language:
+        sections += ["## Reply language", reply_language_instruction(reply_language)]
     return "\n".join(sections) + "\n"
 
 
