@@ -62,6 +62,7 @@ Kapruka MCP client  →  mcp.kapruka.com/mcp
 - **Chats are saved** in Postgres (Supabase): every conversation, with its cart and checkout, survives restarts and refreshes. The sidebar lists your chats, which you can rename or delete. Each browser gets its own anonymous id, so people only see their own chats.
 - **Memory:** Rukmani remembers lasting facts about the people you shop for ("Dilini loves chocolate, allergic to nuts") and uses them in later chats. You can see and delete them under *What Rukmani remembers*. Phone numbers and addresses are never kept. Long chats are condensed into a running summary, so they stay fast and cheap.
 - **Observability:** every turn is traced in [Langfuse](https://langfuse.com) (model calls, tools, tokens, cost, per chat and per visitor). Prompts can be edited in Langfuse without a redeploy.
+- **Low cost per message:** common questions ("hi", "how do I pay?", "do you deliver overseas?") are answered instantly from [`backend/config/faq.yaml`](backend/config/faq.yaml) in all five languages, with no model call. Button messages skip memory extraction, and harmful messages are stopped before the agent.
 - **Built for a public demo:** rate limits per visitor and per day, model fallbacks across providers, and optional Sentry error alerts.
 
 ## Guardrails

@@ -68,6 +68,7 @@ Dependencies point one way only: `api → agent → kapruka`.
 | `storage/` | `database.py` (Postgres checkpointer + store, or in-memory), `chats.py` (the chat list). |
 | `observability.py` | Langfuse tracing and prompt management (off without keys). |
 | `moderation.py` | Safety check on each customer message before the agent sees it (OpenAI moderation, free). |
+| `faq.py` + `config/faq.yaml` | Instant answers to common questions (greetings, contact, payment, tracking, overseas…) with no model call. Only short messages that closely match an example are answered; anything else goes to Rukmani. Edit the YAML to add questions. |
 | `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `deps.py` (visitor id, chat ownership), `history.py` (saved chat → UI messages), `checkout.py` (places the order after Confirm), `events.py` (agent run → UI events), `limits.py` (rate limits), `schemas.py` (request/response bodies). |
 
 ## Tools Rukmani can use
