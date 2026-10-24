@@ -3,6 +3,7 @@
 # Google: uses your gcloud application-default login locally, and Workload
 # Identity Federation (no keys) in GitHub Actions.
 # Vercel: reads the API token from the VERCEL_API_TOKEN environment variable.
+# Supabase: reads the access token from SUPABASE_ACCESS_TOKEN.
 
 provider "google" {
   project = var.project_id
@@ -12,3 +13,5 @@ provider "google" {
 provider "vercel" {
   team = var.vercel_team_id
 }
+
+provider "supabase" {}

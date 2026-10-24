@@ -6,6 +6,11 @@ region            = "asia-south1"
 github_repository = "dananjayaabeytd/Rukmani"
 vercel_team_id    = "team_L6FFBTSkQf3NqpU4zETr3yKh"
 
+supabase_organization_id = "CHANGE_ME"
+
+# Set to true after adding values to the langfuse-* secrets.
+langfuse_enabled = false
+
 model_profile = "budget"
 min_instances = 0
 

@@ -8,7 +8,7 @@ import {
 }
 
 import {
-  for_each = local.secrets
+  for_each = local.model_keys
   to       = google_secret_manager_secret.keys[each.key]
   id       = "projects/${var.project_id}/secrets/${each.value}"
 }

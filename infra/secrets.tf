@@ -5,11 +5,30 @@
 # Add or rotate a value with:
 #   printf '%s' "KEY" | gcloud secrets versions add openai-api-key --data-file=-
 
+#
+# The one exception is "database-url": Terraform creates the database too,
+# so it writes that value itself (see supabase.tf).
+
 locals {
-  secrets = {
+  model_keys = {
     OPENAI_API_KEY = "openai-api-key"
     GROQ_API_KEY   = "groq-api-key"
   }
+  langfuse_keys = {
+    LANGFUSE_PUBLIC_KEY = "langfuse-public-key"
+    LANGFUSE_SECRET_KEY = "langfuse-secret-key"
+  }
+
+  # Every secret box (env var name => secret name).
+  secrets = merge(local.model_keys, local.langfuse_keys, { DATABASE_URL = "database-url" })
+
+  # The ones the backend reads. Langfuse joins once its keys have been added
+  # (langfuse_enabled), because Cloud Run refuses a secret with no value yet.
+  service_secrets = merge(
+    local.model_keys,
+    { DATABASE_URL = "database-url" },
+    var.langfuse_enabled ? local.langfuse_keys : {},
+  )
 }
 
 resource "google_secret_manager_secret" "keys" {

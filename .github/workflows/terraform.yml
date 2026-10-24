@@ -21,6 +21,7 @@ env:
   WORKLOAD_IDENTITY_PROVIDER: projects/240930203956/locations/global/workloadIdentityPools/github/providers/github-actions
   TERRAFORM_SA: github-terraform@rukmani-512609.iam.gserviceaccount.com
   VERCEL_API_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
 defaults:
   run:

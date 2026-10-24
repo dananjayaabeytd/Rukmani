@@ -42,6 +42,34 @@ variable "cors_origins" {
   type        = list(string)
 }
 
+variable "supabase_organization_id" {
+  description = "Supabase organization slug (in the dashboard URL: supabase.com/dashboard/org/<slug>)."
+  type        = string
+
+  validation {
+    condition     = var.supabase_organization_id != "CHANGE_ME"
+    error_message = "Set supabase_organization_id in terraform.tfvars to your Supabase organization slug."
+  }
+}
+
+variable "supabase_region" {
+  description = "Supabase region. ap-south-1 (Mumbai) sits next to the Cloud Run region."
+  type        = string
+  default     = "ap-south-1"
+}
+
+variable "langfuse_enabled" {
+  description = "Turn on Langfuse tracing. Add values to the two langfuse-* secrets first."
+  type        = bool
+  default     = false
+}
+
+variable "langfuse_base_url" {
+  description = "Langfuse host (EU cloud by default; https://us.cloud.langfuse.com for US)."
+  type        = string
+  default     = "https://cloud.langfuse.com"
+}
+
 variable "initial_image" {
   description = <<-EOT
     Container image used when the service is first created. After that,

@@ -4,7 +4,7 @@
 # GitHub Actions owns the IMAGE: each push to main builds and deploys a new
 # one, so Terraform ignores image changes to avoid undoing a deploy.
 
-# The identity the backend runs as. It can read the API keys and nothing else.
+# The identity the backend runs as. It can read its secrets and nothing else.
 resource "google_service_account" "api" {
   account_id   = "rukmani-api"
   display_name = "Rukmani backend (Cloud Run runtime)"
@@ -54,10 +54,18 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "CORS_ORIGINS"
         value = jsonencode(var.cors_origins)
       }
+      env {
+        name  = "ENVIRONMENT"
+        value = "production"
+      }
+      env {
+        name  = "LANGFUSE_BASE_URL"
+        value = var.langfuse_base_url
+      }
 
-      # API keys come from Secret Manager, never from plain env values.
+      # Keys and the database URL come from Secret Manager, never plain env values.
       dynamic "env" {
-        for_each = local.secrets
+        for_each = local.service_secrets
         content {
           name = env.key
           value_source {
@@ -79,7 +87,10 @@ resource "google_cloud_run_v2_service" "api" {
     ]
   }
 
-  depends_on = [google_secret_manager_secret_iam_member.api_reads_keys]
+  depends_on = [
+    google_secret_manager_secret_iam_member.api_reads_keys,
+    google_secret_manager_secret_version.database_url,
+  ]
 }
 
 # Anyone may call the API (the browser talks to it directly). Abuse is
