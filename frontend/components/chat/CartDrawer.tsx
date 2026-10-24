@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ShoppingBag, X } from "lucide-react";
 import { CartLines } from "@/components/cards/CartLines";
 import { formatMoney } from "@/lib/format";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { Cart } from "@/lib/types";
 import { useChatActions } from "./ChatActions";
 
@@ -17,6 +18,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, cart, onClose }: CartDrawerProps) {
   const { send, isReplying } = useChatActions();
+  const { t } = useLanguage();
   const total = cart.items.reduce((sum, i) => sum + (i.price.amount ?? 0) * i.quantity, 0);
 
   // Cart changes go through Rukmani, so she always knows what's in the cart.
@@ -38,7 +40,7 @@ export function CartDrawer({ open, cart, onClose }: CartDrawerProps) {
           />
           <motion.aside
             role="dialog"
-            aria-label="Your cart"
+            aria-label={t.yourCart}
             className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -47,9 +49,9 @@ export function CartDrawer({ open, cart, onClose }: CartDrawerProps) {
           >
             <div className="flex items-center justify-between bg-brand-logo px-4 py-4 text-white">
               <p className="flex items-center gap-2 font-semibold">
-                <ShoppingBag className="size-5" aria-hidden /> Your cart
+                <ShoppingBag className="size-5" aria-hidden /> {t.yourCart}
               </p>
-              <button type="button" onClick={onClose} aria-label="Close cart" className="rounded-full p-1 hover:bg-white/10">
+              <button type="button" onClick={onClose} aria-label={t.closeCart} className="rounded-full p-1 hover:bg-white/10">
                 <X className="size-5" aria-hidden />
               </button>
             </div>
@@ -57,13 +59,13 @@ export function CartDrawer({ open, cart, onClose }: CartDrawerProps) {
             <div className="flex-1 overflow-y-auto px-4">
               {cart.items.length === 0 ? (
                 <p className="py-10 text-center text-ink-soft">
-                  Nothing here yet. Ask Rukmani for gift ideas!
+                  {t.drawerEmpty}
                 </p>
               ) : (
                 <CartLines
                   items={cart.items}
                   disabled={isReplying}
-                  onRemove={(item) => ask(`Remove "${item.name}" (${item.product_id}) from my cart`)}
+                  onRemove={(item) => ask(t.msgRemove(item.name, item.product_id))}
                 />
               )}
             </div>
@@ -71,16 +73,16 @@ export function CartDrawer({ open, cart, onClose }: CartDrawerProps) {
             {cart.items.length > 0 && (
               <div className="border-t border-brand-mist p-4">
                 <p className="mb-3 flex justify-between text-sm">
-                  <span className="text-ink-soft">Items total</span>
+                  <span className="text-ink-soft">{t.itemsTotal}</span>
                   <strong className="text-brand">{formatMoney({ amount: total, currency: "LKR" })}</strong>
                 </p>
                 <button
                   type="button"
-                  onClick={() => ask("I'm ready to check out")}
+                  onClick={() => ask(t.msgCheckout)}
                   disabled={isReplying}
                   className="w-full rounded-full bg-sun py-2.5 font-semibold text-brand transition hover:brightness-95 disabled:opacity-50"
                 >
-                  Checkout with Rukmani
+                  {t.checkoutWithRukmani}
                 </button>
               </div>
             )}

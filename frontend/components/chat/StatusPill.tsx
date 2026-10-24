@@ -1,7 +1,17 @@
-import { LoaderCircle } from "lucide-react";
+"use client";
 
-/** Shows what Rukmani is doing right now, e.g. "Searching Kapruka for gifts…". */
-export function StatusPill({ label }: { label: string }) {
+import { LoaderCircle } from "lucide-react";
+import { statusKeyFor } from "@/lib/i18n";
+import { useLanguage } from "@/components/LanguageProvider";
+
+/**
+ * Shows what Rukmani is doing right now, e.g. "Searching Kapruka for gifts…",
+ * in the chosen language. `status` is "thinking" or the running tool's name.
+ */
+export function StatusPill({ status }: { status: string }) {
+  const { t } = useLanguage();
+  const label = status === "thinking" ? t.status.thinking : t.status[statusKeyFor(status)];
+
   return (
     <div
       role="status"

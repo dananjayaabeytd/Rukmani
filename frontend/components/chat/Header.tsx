@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import { RotateCcw, ShoppingBag } from "lucide-react";
+import { LANGUAGES } from "@/lib/i18n";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface HeaderProps {
   onNewChat: () => void;
@@ -8,11 +12,13 @@ interface HeaderProps {
   onOpenCart: () => void;
 }
 
-/** Kapruka-purple top bar: logo, Rukmani's name, the cart and a "New chat" button. */
+/** Kapruka-purple top bar: logo, Rukmani's name, language switch, cart and "New chat". */
 export function Header({ onNewChat, canReset, cartCount, onOpenCart }: HeaderProps) {
+  const { lang, setLang, t } = useLanguage();
+
   return (
     <header className="bg-brand-logo text-white shadow-md">
-      <div className="mx-auto flex h-16 max-w-4xl items-center gap-3 px-4">
+      <div className="mx-auto flex h-16 max-w-4xl items-center gap-2 px-3 sm:gap-3 sm:px-4">
         {/* The logo file has its own purple background; the bar uses the same colour. */}
         <Image
           src="/kapruka-logo.webp"
@@ -20,19 +26,36 @@ export function Header({ onNewChat, canReset, cartCount, onOpenCart }: HeaderPro
           width={2000}
           height={557}
           priority
-          className="h-7 w-auto sm:h-9"
+          className="h-6 w-auto sm:h-9"
         />
-        <div className="h-7 w-px bg-white/25" aria-hidden />
-        <div className="leading-tight whitespace-nowrap">
-          <p className="font-semibold">Rukmani</p>
-          <p className="text-xs text-white/70">Your gift concierge</p>
+        <div className="hidden h-7 w-px bg-white/25 sm:block" aria-hidden />
+        <div className="hidden leading-tight whitespace-nowrap sm:block">
+          <p className="font-semibold">{t.name}</p>
+          <p className="text-xs text-white/70">{t.tagline}</p>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          {/* Interface language */}
+          <div className="flex rounded-full bg-white/10 p-0.5 text-xs" role="group" aria-label="Language">
+            {LANGUAGES.map(({ code, label }) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => setLang(code)}
+                aria-pressed={lang === code}
+                className={`rounded-full px-2 py-1 transition ${
+                  lang === code ? "bg-sun font-semibold text-brand" : "text-white/80 hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={onOpenCart}
-            aria-label={`Cart, ${cartCount} items`}
+            aria-label={t.cartLabel(cartCount)}
             className="relative rounded-full p-2 transition hover:bg-white/10"
           >
             <ShoppingBag className="size-5" aria-hidden />
@@ -47,12 +70,12 @@ export function Header({ onNewChat, canReset, cartCount, onOpenCart }: HeaderPro
             type="button"
             onClick={onNewChat}
             disabled={!canReset}
-            aria-label="New chat"
+            aria-label={t.newChat}
             className="flex items-center gap-1.5 rounded-full border border-white/30 p-2 text-sm transition hover:bg-white/10 disabled:hidden sm:px-3 sm:py-1.5"
           >
             <RotateCcw className="size-4" aria-hidden />
             {/* Icon only on phones, to keep the bar on one line. */}
-            <span className="hidden sm:inline">New chat</span>
+            <span className="hidden whitespace-nowrap md:inline">{t.newChat}</span>
           </button>
         </div>
       </div>

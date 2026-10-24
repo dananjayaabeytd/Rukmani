@@ -1,5 +1,8 @@
+"use client";
+
 import { CalendarCheck, CalendarClock, CircleAlert, Truck } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/format";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { DeliveryCheck } from "@/lib/types";
 import { DateStrip } from "./DateStrip";
 
@@ -14,6 +17,7 @@ interface DeliveryCardProps {
  * strip of upcoming days to check another date with one tap.
  */
 export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
+  const { t } = useLanguage();
   const notDeliverable = delivery.item_deliverable === false;
   const deliveryDate = delivery.available
     ? delivery.checked_date
@@ -23,7 +27,7 @@ export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
   const fee =
     delivery.delivery_fee === null
       ? null
-      : `${delivery.fee_basis === "max" ? "Up to " : ""}${formatMoney({
+      : `${delivery.fee_basis === "max" ? t.upTo : ""}${formatMoney({
           amount: delivery.delivery_fee,
           currency: delivery.fee_currency,
         })}`;
@@ -32,25 +36,25 @@ export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
     <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-brand-muted/20">
       <div className="flex items-center gap-2 bg-brand px-4 py-2 text-sm font-medium text-white">
         <Truck className="size-4 text-sun" aria-hidden />
-        Delivery to {delivery.city}
+        {t.deliveryTo(delivery.city)}
       </div>
 
       <div className="flex flex-col gap-2 p-4 text-sm">
         {notDeliverable ? (
           <Row icon={<CircleAlert className="size-5 text-red-600" />}>
-            This item isn&apos;t delivered to {delivery.city}.
+            {t.notDelivered(delivery.city)}
           </Row>
         ) : delivery.available ? (
           <Row icon={<CalendarCheck className="size-5 text-success" />}>
-            Can arrive on <strong>{formatDate(delivery.checked_date)}</strong>
+            {t.canArrive} <strong>{formatDate(delivery.checked_date, t.locale)}</strong>
           </Row>
         ) : (
           <Row icon={<CalendarClock className="size-5 text-gold" />}>
-            {formatDate(delivery.checked_date)} is full.
+            {t.dateFull(formatDate(delivery.checked_date, t.locale))}
             {deliveryDate && (
               <>
                 {" "}
-                Earliest: <strong>{formatDate(deliveryDate)}</strong>
+                {t.earliest} <strong>{formatDate(deliveryDate, t.locale)}</strong>
               </>
             )}
           </Row>
@@ -58,7 +62,7 @@ export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
 
         {fee && !notDeliverable && (
           <p className="text-ink-soft">
-            Delivery fee: <span className="font-semibold text-brand">{fee}</span>
+            {t.deliveryFee} <span className="font-semibold text-brand">{fee}</span>
           </p>
         )}
 
@@ -74,8 +78,8 @@ export function DeliveryCard({ delivery, productId }: DeliveryCardProps) {
 
         {notDeliverable && delivery.deliverable_cities.length > 0 && (
           <p className="text-ink-soft">
-            It can go to: {delivery.deliverable_cities.slice(0, 8).join(", ")}
-            {delivery.deliverable_cities.length > 8 && " and more"}
+            {t.canGoTo} {delivery.deliverable_cities.slice(0, 8).join(", ")}
+            {delivery.deliverable_cities.length > 8 && t.andMore}
           </p>
         )}
 

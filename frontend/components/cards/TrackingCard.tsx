@@ -1,8 +1,12 @@
+"use client";
+
 import { CircleCheck, CircleX, Package } from "lucide-react";
 import type { OrderStatus } from "@/lib/types";
+import { useLanguage } from "@/components/LanguageProvider";
 
 /** Where a paid order is: status badge, delivery date, items and a progress timeline. */
 export function TrackingCard({ order }: { order: OrderStatus }) {
+  const { t } = useLanguage();
   const cancelled = order.status === "cancelled";
   const delivered = order.status === "delivered";
   const badge = cancelled
@@ -15,7 +19,7 @@ export function TrackingCard({ order }: { order: OrderStatus }) {
     <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-brand-muted/20">
       <div className="flex items-center justify-between gap-2 bg-brand px-4 py-2.5 text-sm text-white">
         <span className="flex items-center gap-2 font-semibold">
-          <Package className="size-4 text-sun" aria-hidden /> Order {order.order_number}
+          <Package className="size-4 text-sun" aria-hidden /> {t.orderNumber(order.order_number)}
         </span>
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${badge}`}>
           {order.status_display}
@@ -24,14 +28,8 @@ export function TrackingCard({ order }: { order: OrderStatus }) {
 
       <div className="flex flex-col gap-4 p-4 text-sm">
         <p className="text-ink-soft">
-          {order.recipient_name && (
-            <>
-              For <strong className="text-ink">{order.recipient_name}</strong>
-              {order.recipient_city && <> in {order.recipient_city}</>}
-              {" · "}
-            </>
-          )}
-          Delivery: <strong className="text-ink">{order.delivery_date ?? "to be confirmed"}</strong>
+          {order.recipient_name && <>{t.forRecipient(order.recipient_name, order.recipient_city)} · </>}
+          {t.deliveryLabel} <strong className="text-ink">{order.delivery_date ?? t.toBeConfirmed}</strong>
         </p>
 
         {order.progress.length > 0 && (
@@ -73,7 +71,7 @@ export function TrackingCard({ order }: { order: OrderStatus }) {
             ) : (
               <CircleX className="size-4 text-red-600" aria-hidden />
             )}
-            {delivered ? "Delivered — thank you for shopping with Kapruka!" : "This order was cancelled."}
+            {delivered ? t.delivered : t.cancelled}
           </p>
         )}
       </div>

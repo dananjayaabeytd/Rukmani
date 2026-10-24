@@ -21,10 +21,10 @@ export function addDays(isoDate: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-/** "Sat, 25 Oct" from "2026-10-25". Parsed as a plain date so no time zone shifts it. */
-export function formatDate(isoDate: string): string {
+/** "Sat, 25 Oct" from "2026-10-25", in the given language. Parsed as a plain date so no time zone shifts it. */
+export function formatDate(isoDate: string, locale = "en-GB"): string {
   const [year, month, day] = isoDate.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
+  return new Date(year, month - 1, day).toLocaleDateString(locale, {
     weekday: "short",
     day: "numeric",
     month: "short",

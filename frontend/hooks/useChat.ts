@@ -5,7 +5,7 @@
  *
  * `send()` adds the customer's message plus an empty reply from Rukmani,
  * then fills that reply in as stream events arrive: text tokens, tool
- * status ("Searching Kapruka..."), and artifacts (product cards, delivery).
+ * status (which tool is running), and artifacts (product cards, delivery).
  *
  * `confirmCheckout()` places the order for this conversation's pending
  * checkout. It is only called from the Confirm button on the summary card.
@@ -16,16 +16,13 @@ import { ApiError, confirmCheckout as postCheckout, streamChat } from "@/lib/api
 import { clearChat, loadChat, saveChat } from "@/lib/storage";
 import type { ChatMessage, Order, StreamEvent } from "@/lib/types";
 
-const CONNECTION_ERROR =
-  "I can't reach the shop right now. Please check your connection and try again.";
-
 function newMessage(role: ChatMessage["role"], text = ""): ChatMessage {
   return {
     id: crypto.randomUUID(),
     role,
     text,
     artifacts: [],
-    status: role === "assistant" ? "Thinking" : null,
+    status: role === "assistant" ? "thinking" : null,
     failed: false,
   };
 }
@@ -36,7 +33,8 @@ function applyEvent(reply: ChatMessage, event: StreamEvent): ChatMessage {
     case "token":
       return { ...reply, text: reply.text + event.text, status: null };
     case "tool":
-      return { ...reply, status: event.label };
+      // The status is the tool name; StatusPill shows it in the chosen language.
+      return { ...reply, status: event.tool };
     case "artifact":
       return { ...reply, artifacts: [...reply.artifacts, event.artifact] };
     case "error":
@@ -98,8 +96,9 @@ export function useChat() {
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           // Messages from our server (e.g. "please wait a few minutes") are
-          // written for customers; anything else is a connection problem.
-          const text = error instanceof ApiError ? error.message : CONNECTION_ERROR;
+          // written for customers. For anything else (a connection problem) the
+          // text stays empty and the UI shows its own message in the chosen language.
+          const text = error instanceof ApiError ? error.message : "";
           updateMessage(reply.id, (m) => ({ ...m, text, status: null, failed: true }));
         }
       } finally {

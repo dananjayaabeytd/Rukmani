@@ -1,41 +1,31 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useLanguage } from "@/components/LanguageProvider";
 import { RukmaniAvatar } from "./RukmaniAvatar";
-
-// Starter questions in all three languages Rukmani speaks.
-const SUGGESTIONS = [
-  "අම්මට birthday cake එකක් ඕනේ",
-  "Valentine's roses for my wife",
-  "Kandy walata heta chocolate hamper ekak yawanna puluwanda?",
-  "A get-well-soon gift under LKR 5,000",
-];
 
 interface WelcomeProps {
   onPick: (suggestion: string) => void;
 }
 
-/** First screen: a greeting and one-tap suggestions. */
+/** First screen: a greeting and one-tap suggestions, in the chosen language. */
 export function Welcome({ onPick }: WelcomeProps) {
+  const { t } = useLanguage();
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="mx-auto flex max-w-2xl flex-col items-center px-4 pt-14 pb-8 text-center sm:pt-20"
+      className="mx-auto flex max-w-2xl flex-col items-center px-4 pt-12 pb-8 text-center sm:pt-16"
     >
       <RukmaniAvatar size="lg" />
-      <h1 className="mt-5 text-2xl font-bold text-brand sm:text-3xl">
-        Ayubowan! I&apos;m Rukmani
-      </h1>
-      <p className="mt-2 text-lg text-brand-light">ආයුබෝවන්! මම රුක්මණී</p>
-      <p className="mt-4 max-w-md text-ink-soft">
-        Tell me who the gift is for, the occasion and when it should arrive. Ask in Sinhala,
-        Singlish or English, and I&apos;ll find something lovely on Kapruka.
-      </p>
+      <h1 className="mt-5 text-2xl font-bold text-brand sm:text-3xl">{t.welcomeTitle}</h1>
+      <p className="mt-2 text-base text-brand-light">{t.welcomeLanguages}</p>
+      <p className="mt-4 max-w-md text-ink-soft">{t.welcomeIntro}</p>
 
       <div className="mt-8 grid w-full gap-3 sm:grid-cols-2">
-        {SUGGESTIONS.map((suggestion) => (
+        {t.suggestions.map((suggestion) => (
           <button
             key={suggestion}
             type="button"

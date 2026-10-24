@@ -7,7 +7,8 @@
  */
 
 import { useChatActions } from "@/components/chat/ChatActions";
-import { addDays, sriLankaToday } from "@/lib/format";
+import { addDays, formatDate, sriLankaToday } from "@/lib/format";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface DateStripProps {
   city: string;
@@ -21,16 +22,16 @@ const DAYS_SHOWN = 7;
 
 export function DateStrip({ city, productId, checkedDate, available, nextAvailableDate }: DateStripProps) {
   const { send, isReplying } = useChatActions();
+  const { t } = useLanguage();
   const today = sriLankaToday();
   const days = Array.from({ length: DAYS_SHOWN }, (_, i) => addDays(today, i));
 
   function check(date: string) {
-    const item = productId ? ` for ${productId}` : "";
-    send(`Can you deliver to ${city} on ${date}${item}?`);
+    send(t.msgCheckDate(city, date, productId));
   }
 
   return (
-    <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1" role="group" aria-label="Pick a delivery date">
+    <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1" role="group" aria-label={t.pickDate}>
       {days.map((date) => {
         const isChecked = date === checkedDate;
         const isNext = date === nextAvailableDate;
@@ -42,7 +43,7 @@ export function DateStrip({ city, productId, checkedDate, available, nextAvailab
             ? "bg-success/15 text-success ring-1 ring-success"
             : "bg-brand-mist text-ink-soft hover:bg-brand-muted/30";
         const [, , dayOfMonth] = date.split("-");
-        const weekday = new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short" });
+        const weekday = new Date(`${date}T00:00:00`).toLocaleDateString(t.locale, { weekday: "short" });
 
         return (
           <button
@@ -50,7 +51,7 @@ export function DateStrip({ city, productId, checkedDate, available, nextAvailab
             type="button"
             onClick={() => check(date)}
             disabled={isReplying || isChecked}
-            aria-label={`Check delivery on ${date}`}
+            aria-label={formatDate(date, t.locale)}
             className={`flex w-12 shrink-0 flex-col items-center rounded-xl py-1.5 text-xs transition disabled:cursor-default ${style}`}
           >
             <span>{weekday}</span>

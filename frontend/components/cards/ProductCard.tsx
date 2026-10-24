@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ExternalLink, Gift, Plus } from "lucide-react";
 import { useChatActions } from "@/components/chat/ChatActions";
 import { formatMoney } from "@/lib/format";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { Product } from "@/lib/types";
 
 /**
@@ -12,12 +13,13 @@ import type { Product } from "@/lib/types";
  */
 export function ProductCard({ product }: { product: Product }) {
   const { send, isReplying } = useChatActions();
+  const { t } = useLanguage();
   const onSale = product.compare_at_price !== null;
 
   // Adding goes through Rukmani (as a message), so she knows the cart and can
   // ask about icing text for cakes. The id makes it unambiguous for her.
   function addToCart() {
-    send(`Add "${product.name}" (${product.id}) to my cart`);
+    send(t.msgAdd(product.name, product.id));
   }
 
   return (
@@ -37,7 +39,7 @@ export function ProductCard({ product }: { product: Product }) {
         {/* No low-stock badge: Kapruka reports almost every item as "low", so it would be noise. */}
         {onSale && (
           <span className="absolute top-2 right-2 rounded-full bg-sun px-2 py-0.5 text-xs font-bold text-brand">
-            Sale
+            {t.sale}
           </span>
         )}
       </a>
@@ -59,7 +61,7 @@ export function ProductCard({ product }: { product: Product }) {
           disabled={isReplying}
           className="mt-1 flex items-center justify-center gap-1 rounded-full bg-brand py-1.5 text-xs font-semibold text-white transition hover:bg-brand-deep disabled:opacity-50"
         >
-          <Plus className="size-3.5" aria-hidden /> Add to cart
+          <Plus className="size-3.5" aria-hidden /> {t.addToCart}
         </button>
         <a
           href={product.url}
@@ -67,7 +69,7 @@ export function ProductCard({ product }: { product: Product }) {
           rel="noreferrer"
           className="flex items-center justify-center gap-1 text-xs text-brand-light hover:underline"
         >
-          View on Kapruka <ExternalLink className="size-3" aria-hidden />
+          {t.viewOnKapruka} <ExternalLink className="size-3" aria-hidden />
         </a>
       </div>
     </div>

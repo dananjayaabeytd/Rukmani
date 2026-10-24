@@ -9,6 +9,7 @@ import { DeliveryCard } from "@/components/cards/DeliveryCard";
 import { ProductCarousel } from "@/components/cards/ProductCarousel";
 import { ProductDetailCard } from "@/components/cards/ProductDetailCard";
 import { TrackingCard } from "@/components/cards/TrackingCard";
+import { useLanguage } from "@/components/LanguageProvider";
 import { useChatActions } from "./ChatActions";
 import { RukmaniAvatar } from "./RukmaniAvatar";
 import { StatusPill } from "./StatusPill";
@@ -18,6 +19,10 @@ import { StatusPill } from "./StatusPill";
  * While she is still working, a status pill shows the current step.
  */
 export function AssistantMessage({ message }: { message: ChatMessage }) {
+  const { t } = useLanguage();
+  // A failed reply with no text means we couldn't reach the server at all.
+  const text = message.failed && !message.text ? t.connectionError : message.text;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -31,7 +36,7 @@ export function AssistantMessage({ message }: { message: ChatMessage }) {
           <ArtifactView key={index} artifact={artifact} artifactKey={`${message.id}:${index}`} />
         ))}
 
-        {message.text && (
+        {text && (
           <div
             className={`w-fit max-w-full rounded-2xl rounded-tl-md px-4 py-2.5 shadow-sm sm:max-w-[85%] ${
               message.failed ? "bg-red-50 text-red-800" : "bg-white text-ink"
@@ -48,12 +53,12 @@ export function AssistantMessage({ message }: { message: ChatMessage }) {
                 ),
               }}
             >
-              {message.text}
+              {text}
             </Markdown>
           </div>
         )}
 
-        {message.status && <StatusPill label={message.status} />}
+        {message.status && <StatusPill status={message.status} />}
       </div>
     </motion.div>
   );

@@ -136,7 +136,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   text: string;
   artifacts: Artifact[];
-  /** What Rukmani is doing right now, e.g. "Searching Kapruka for gifts". */
+  /** What Rukmani is doing right now: "thinking" or the running tool's name (null when done). */
   status: string | null;
   failed: boolean;
 }

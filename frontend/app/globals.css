@@ -21,9 +21,9 @@
   --color-success: #3fae1c;      /* darker shade of Kapruka's #63ce3a, readable on white */
 }
 
-/* Fonts are loaded in app/layout.tsx; Sinhala text falls back to Noto Sans Sinhala. */
+/* Fonts are loaded in app/layout.tsx; Sinhala and Tamil text fall back to Noto Sans. */
 @theme inline {
-  --font-sans: var(--font-roboto), var(--font-sinhala), system-ui, sans-serif;
+  --font-sans: var(--font-roboto), var(--font-sinhala), var(--font-tamil), system-ui, sans-serif;
 }
 
 body {

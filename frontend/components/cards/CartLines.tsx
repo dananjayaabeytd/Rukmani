@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import { Gift, X } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { CartItem } from "@/lib/types";
 
 interface CartLinesProps {
@@ -12,6 +15,7 @@ interface CartLinesProps {
 
 /** The list of items in a cart: photo, name, quantity, icing text and line price. */
 export function CartLines({ items, onRemove, disabled }: CartLinesProps) {
+  const { t } = useLanguage();
   return (
     <ul className="divide-y divide-brand-mist">
       {items.map((item) => (
@@ -28,7 +32,7 @@ export function CartLines({ items, onRemove, disabled }: CartLinesProps) {
             <p className="truncate text-sm font-medium text-ink">{item.name}</p>
             <p className="text-xs text-ink-soft">
               {item.quantity} × {formatMoney(item.price)}
-              {item.icing_text && <> · Icing: “{item.icing_text}”</>}
+              {item.icing_text && <> · {t.icing}: “{item.icing_text}”</>}
             </p>
           </div>
 
@@ -44,7 +48,7 @@ export function CartLines({ items, onRemove, disabled }: CartLinesProps) {
               type="button"
               onClick={() => onRemove(item)}
               disabled={disabled}
-              aria-label={`Remove ${item.name}`}
+              aria-label={t.remove(item.name)}
               className="rounded-full p-1 text-ink-soft transition hover:bg-brand-mist hover:text-brand disabled:opacity-40"
             >
               <X className="size-4" aria-hidden />

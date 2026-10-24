@@ -1,10 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import { ExternalLink, MapPin } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { ProductDetail } from "@/lib/types";
 
 /** A closer look at one product, including where it can be delivered. */
 export function ProductDetailCard({ product }: { product: ProductDetail }) {
+  const { t } = useLanguage();
   const limitedDelivery = product.delivery && !product.delivery.island_wide;
   // Kapruka descriptions contain long runs of spaces; tidy them for display.
   const description = product.description.replace(/\s+/g, " ").trim();
@@ -25,8 +29,8 @@ export function ProductDetailCard({ product }: { product: ProductDetail }) {
         <p className="flex items-center gap-1 text-xs text-ink-soft">
           <MapPin className="size-3.5 text-brand-light" aria-hidden />
           {limitedDelivery
-            ? `Delivered to ${product.delivery?.deliverable_city_count ?? "selected"} cities only`
-            : "Delivered island-wide"}
+            ? t.limitedCities(product.delivery?.deliverable_city_count ?? "")
+            : t.islandWide}
         </p>
 
         <a
@@ -35,7 +39,7 @@ export function ProductDetailCard({ product }: { product: ProductDetail }) {
           rel="noreferrer"
           className="mt-1 flex w-fit items-center gap-1 rounded-full bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-deep"
         >
-          Open on Kapruka <ExternalLink className="size-3" aria-hidden />
+          {t.openOnKapruka} <ExternalLink className="size-3" aria-hidden />
         </a>
       </div>
     </div>
