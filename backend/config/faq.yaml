@@ -10,7 +10,9 @@
 #     Rukmani answers instead.
 #
 # Facts come from kapruka.com (Office Locations, Order Tracking, International
-# Gifts, Same Day Delivery pages). Keep them in sync if Kapruka changes them.
+# Gifts, Same Day Delivery, and the Returns/Refunds policy page) and from
+# Kapruka's own assistant Aloka (payment methods, Sunday delivery), checked
+# October 2026. Keep them in sync if Kapruka changes them.
 # Never put a policy here that isn't on Kapruka's site — send people to the
 # hotline instead.
 
@@ -146,18 +148,21 @@ faq:
         Kapruka's support team is available 24/7:
         - 📞 Hotline: **+94 117 551 111**
         - 💬 WhatsApp: **+94 711 222 002**
+        - ✉️ Email: **info@kapruka.com**
 
         I can also help right here — with products, delivery, your cart or tracking an order.
       si: |
         Kapruka සහාය කණ්ඩායම පැය 24 පුරාම ඉන්නවා:
         - 📞 Hotline: **+94 117 551 111**
         - 💬 WhatsApp: **+94 711 222 002**
+        - ✉️ Email: **info@kapruka.com**
 
         මටත් මෙතනම උදව් කරන්න පුළුවන් — භාණ්ඩ, delivery, cart එක හෝ order එක track කරන්න.
       ta: |
         Kapruka உதவிக் குழு 24 மணி நேரமும் உள்ளது:
         - 📞 Hotline: **+94 117 551 111**
         - 💬 WhatsApp: **+94 711 222 002**
+        - ✉️ Email: **info@kapruka.com**
 
         இங்கேயே நானும் உதவ முடியும் — பொருட்கள், டெலிவரி, cart அல்லது ஆர்டர் tracking.
 
@@ -243,20 +248,40 @@ faq:
       - payment methods
       - what payment methods do you accept
       - can i pay by card
+      - can i pay with amex
       - can i pay cash on delivery
       - cash on delivery
       - do you accept cash on delivery
+      - is cod available
+      - can i pay with koko
+      - can i pay with mintpay
+      - can i pay by bank transfer
       - is payment safe
     answers:
       en: |
-        When you confirm your order here, I give you a **secure Kapruka payment link** (valid for 60 minutes), and you pay online there.
-        For any other payment questions, Kapruka's 24/7 hotline can help: **+94 117 551 111**.
+        Kapruka accepts:
+        - 💳 **Cards:** Visa, Mastercard and Amex
+        - 🧾 **Koko or MintPay** (pay in instalments) on orders from LKR 1,000
+        - 🏦 **Online bank transfer**
+        - 💵 **Cash on delivery** on most orders — not for restaurant or frozen food, or on peak days
+
+        When you confirm an order here, I give you a **secure Kapruka payment link** to pay. Questions about paying? Call **+94 117 551 111** (24/7).
       si: |
-        මෙතන order එක confirm කළාම මම **ආරක්ෂිත Kapruka ගෙවීම් link එකක්** දෙනවා (විනාඩි 60ක් valid), ඒකෙන් online ගෙවන්න පුළුවන්.
-        වෙනත් ගෙවීම් ප්‍රශ්න සඳහා Kapruka පැය 24 hotline එක: **+94 117 551 111**.
+        Kapruka එකේ ගෙවන්න පුළුවන්:
+        - 💳 **කාඩ්:** Visa, Mastercard සහ Amex
+        - 🧾 **Koko හෝ MintPay** (වාරික වලින්) — රු. 1,000ට වැඩි order වලට
+        - 🏦 **Online bank transfer**
+        - 💵 **Cash on delivery** ගොඩක් order වලට — restaurant/frozen food සහ peak දවස් වලට නැහැ
+
+        මෙතන order එක confirm කළාම මම **ආරක්ෂිත Kapruka ගෙවීම් link එකක්** දෙනවා. ගෙවීම් ගැන ප්‍රශ්න නම් **+94 117 551 111** (පැය 24).
       ta: |
-        இங்கே ஆர்டரை confirm செய்ததும், **பாதுகாப்பான Kapruka கட்டண link** ஒன்றைத் தருகிறேன் (60 நிமிடங்கள் valid), அதில் online-ஆகச் செலுத்தலாம்.
-        வேறு கட்டணக் கேள்விகளுக்கு Kapruka 24 மணி நேர hotline: **+94 117 551 111**.
+        Kapruka-வில் இவ்வாறு செலுத்தலாம்:
+        - 💳 **அட்டைகள்:** Visa, Mastercard மற்றும் Amex
+        - 🧾 **Koko அல்லது MintPay** (தவணைகளாக) — ரூ. 1,000 முதல் ஆர்டர்களுக்கு
+        - 🏦 **Online bank transfer**
+        - 💵 **Cash on delivery** பெரும்பாலான ஆர்டர்களுக்கு — restaurant/frozen food மற்றும் peak நாட்களில் இல்லை
+
+        இங்கே ஆர்டரை confirm செய்ததும் **பாதுகாப்பான Kapruka கட்டண link** தருகிறேன். கட்டணம் பற்றி கேள்வியா? **+94 117 551 111** (24 மணி நேரம்).
 
   - id: refund
     examples:
@@ -264,26 +289,67 @@ faq:
       - refund policy
       - return policy
       - can i return an item
+      - how do i return an item
       - how do i get a refund
-      - can i cancel my order
-      - how do i cancel my order
       - i want a refund
+      - i want to return my order
+      - my item arrived damaged
     answers:
       en: |
-        For returns, refunds or cancelling an order, Kapruka's support team handles it directly, 24/7:
-        - 📞 **+94 117 551 111**
-        - 💬 WhatsApp **+94 711 222 002**
+        Kapruka offers easy returns for genuine reasons (faulty, damaged or not as described). "Change of mind" isn't accepted. Time to contact Kapruka:
+        - **General items:** within 15 days of purchase
+        - **Electronics and clothing:** within 7 days
+        - **Global Shop:** within 24 hours of delivery
 
-        Have your 12-digit order number ready.
+        Refunds go back to your original payment method. Contact **+94 117 551 111**, WhatsApp **070 285 5000** or **info@kapruka.com**.
+        Full policy: https://www.kapruka.com/shop/returns-refunds-and-other-policies-of-kapruka
       si: |
-        Return, refund හෝ order එක cancel කරන්න Kapruka සහාය කණ්ඩායම පැය 24 පුරාම උදව් කරනවා:
-        - 📞 **+94 117 551 111**
-        - 💬 WhatsApp **+94 711 222 002**
+        සාධාරණ හේතුවක් තියෙනවා නම් (දෝෂ සහිත, හානි වූ, හෝ විස්තරයට නොගැළපෙන) Kapruka පහසුවෙන් return කරනවා. "හිත වෙනස් වුණා" කියන එක පිළිගන්නේ නැහැ. Kapruka අමතන්න ඕනේ:
+        - **සාමාන්‍ය භාණ්ඩ:** මිලදී ගෙන දින 15ක් ඇතුළත
+        - **Electronics සහ ඇඳුම්:** දින 7ක් ඇතුළත
+        - **Global Shop:** ලැබී පැය 24ක් ඇතුළත
 
-        ඔබේ ඉලක්කම් 12ක order අංකය ළඟ තියාගන්න.
+        Refund එක ගෙවපු ක්‍රමයටම ලැබෙනවා. අමතන්න **+94 117 551 111**, WhatsApp **070 285 5000** හෝ **info@kapruka.com**.
+        සම්පූර්ණ ප්‍රතිපත්තිය: https://www.kapruka.com/shop/returns-refunds-and-other-policies-of-kapruka
       ta: |
-        Return, refund அல்லது ஆர்டரை cancel செய்ய Kapruka உதவிக் குழு 24 மணி நேரமும் உதவும்:
-        - 📞 **+94 117 551 111**
-        - 💬 WhatsApp **+94 711 222 002**
+        சரியான காரணம் இருந்தால் (பழுது, சேதம், அல்லது விவரத்துடன் பொருந்தாதது) Kapruka எளிதாக return செய்யும். "மனம் மாறியது" ஏற்றுக்கொள்ளப்படாது. Kapruka-வை தொடர்பு கொள்ள வேண்டிய காலம்:
+        - **பொதுப் பொருட்கள்:** வாங்கி 15 நாட்களுக்குள்
+        - **Electronics மற்றும் ஆடைகள்:** 7 நாட்களுக்குள்
+        - **Global Shop:** கிடைத்து 24 மணி நேரத்துக்குள்
 
-        உங்கள் 12 இலக்க ஆர்டர் எண்ணைத் தயாராக வைத்திருங்கள்.
+        Refund நீங்கள் செலுத்திய முறைக்கே திரும்ப வரும். தொடர்புக்கு **+94 117 551 111**, WhatsApp **070 285 5000** அல்லது **info@kapruka.com**.
+        முழுக் கொள்கை: https://www.kapruka.com/shop/returns-refunds-and-other-policies-of-kapruka
+
+  - id: cancel_order
+    examples:
+      - can i cancel my order
+      - how do i cancel my order
+      - i want to cancel my order
+      - cancel my order
+    answers:
+      en: |
+        A placed order can be cancelled only **before Kapruka starts processing it**. After that, Kapruka may refuse or give a partial refund.
+        To cancel, contact Kapruka quickly on **+94 117 551 111** (24/7) with your 12-digit order number.
+
+        (If you haven't paid yet, you can also just leave the payment link — or tell me what to change.)
+      si: |
+        Order එකක් cancel කරන්න පුළුවන් **Kapruka එක process කරන්න පටන් ගන්න කලින් විතරයි**. ඊට පස්සේ cancel කිරීම ප්‍රතික්ෂේප කරන්න හෝ කොටසක් විතරක් refund කරන්න පුළුවන්.
+        Cancel කරන්න ඉක්මනින් **+94 117 551 111** (පැය 24) අමතන්න, ඉලක්කම් 12ක order අංකයත් එක්ක.
+
+        (තාම ගෙව්වේ නැත්නම්, payment link එක අත්හරින්නත් පුළුවන් — නැත්නම් මොනවද වෙනස් කරන්න ඕනේ කියන්න.)
+      ta: |
+        ஆர்டரை **Kapruka process செய்யத் தொடங்கும் முன் மட்டுமே** cancel செய்ய முடியும். அதன் பிறகு Kapruka மறுக்கலாம் அல்லது பகுதி refund மட்டும் தரலாம்.
+        Cancel செய்ய உடனே **+94 117 551 111** (24 மணி நேரம்) அழைக்கவும், உங்கள் 12 இலக்க ஆர்டர் எண்ணுடன்.
+
+        (இன்னும் பணம் செலுத்தவில்லை என்றால், payment link-ஐ விட்டுவிடலாம் — அல்லது என்ன மாற்ற வேண்டும் என்று சொல்லுங்கள்.)
+
+  - id: sunday_delivery
+    examples:
+      - do you deliver on sundays
+      - do you deliver on sunday
+      - sunday delivery
+      - can you deliver on sunday
+    answers:
+      en: Yes, Kapruka delivers on Sundays too 🚚 Availability depends on the item and the city — tell me both, and I'll check the exact date for you.
+      si: ඔව්, Kapruka ඉරිදා දිනවලත් delivery කරනවා 🚚 ඒක භාණ්ඩය සහ නගරය අනුව වෙනස් වෙනවා — දෙකම කියන්න, හරියටම දිනය බලලා කියන්නම්.
+      ta: ஆம், Kapruka ஞாயிற்றுக்கிழமைகளிலும் டெலிவரி செய்கிறது 🚚 இது பொருள் மற்றும் ஊரைப் பொறுத்தது — இரண்டையும் சொல்லுங்கள், சரியான தேதியைச் சரிபார்க்கிறேன்.
