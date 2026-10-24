@@ -51,6 +51,7 @@ Switch with `active_profile` in the YAML, or `MODEL_PROFILE=balanced` in `.env`.
 ```bash
 uv run pytest                         # unit tests (no network, no API keys)
 uv run python scripts/smoke_kapruka.py   # live read-only calls to Kapruka
+uv run python scripts/guardrail_check.py # 10 tricky messages against a running backend (real model calls)
 uv run ruff check . && uv run ruff format --check .
 ```
 
@@ -66,6 +67,7 @@ Dependencies point one way only: `api → agent → kapruka`.
 | `memory/` | Long-term facts (`book.py`, `policies.py`, `extractor.py`), chat summaries (`summarizer.py`), and their prompts. |
 | `storage/` | `database.py` (Postgres checkpointer + store, or in-memory), `chats.py` (the chat list). |
 | `observability.py` | Langfuse tracing and prompt management (off without keys). |
+| `moderation.py` | Safety check on each customer message before the agent sees it (OpenAI moderation, free). |
 | `api/` | `main.py` (app + startup), `routes.py` (HTTP endpoints), `deps.py` (visitor id, chat ownership), `history.py` (saved chat → UI messages), `checkout.py` (places the order after Confirm), `events.py` (agent run → UI events), `limits.py` (rate limits), `schemas.py` (request/response bodies). |
 
 ## Tools Rukmani can use

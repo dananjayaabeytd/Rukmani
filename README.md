@@ -64,6 +64,23 @@ Kapruka MCP client  →  mcp.kapruka.com/mcp
 - **Observability:** every turn is traced in [Langfuse](https://langfuse.com) (model calls, tools, tokens, cost, per chat and per visitor). Prompts can be edited in Langfuse without a redeploy.
 - **Built for a public demo:** rate limits per visitor and per day, model fallbacks across providers, and optional Sentry error alerts.
 
+## Guardrails
+
+Layered, and sized to the risk. Anything that touches money or personal data is enforced **in code**, so no message can talk Rukmani past it. Behaviour (tone, topic) is guided by the prompt.
+
+| Guardrail | Enforced by | What it stops |
+|---|---|---|
+| No order-placing tool: only the customer's **Confirm** click creates an order | Code | The model ordering by itself, even if tricked |
+| Any cart change cancels a pending checkout | Code | Confirming a summary that no longer matches the cart |
+| Safety check on every message ([OpenAI moderation](https://platform.openai.com/docs/guides/moderation), free) | Code | Abusive or harmful messages get a polite fixed reply and never reach the agent. Self-harm gets Sri Lanka's 1926 helpline. |
+| Rate limits per visitor and per day, max 16 agent steps per message, 2,000-character messages | Code | Abuse, runaway loops, surprise bills |
+| Memory refuses phone numbers and emails; tracking hides recipients' phone and address | Code | Storing or leaking personal data |
+| Chats and memory belong to one anonymous visitor id | Code | Seeing someone else's chats |
+| Stays on Kapruka shopping; won't reveal its prompt or role-play another assistant | Prompt | Off-topic answers and jailbreaks. Off-topic requests are turned into a product search where it fits ("laundry tips?" → detergent on Kapruka). |
+| Never guesses gender or family terms; picks must suit the recipient | Prompt | "Akka", or a "For Him" gift for a wife |
+
+Prompt guardrails are strong but, as with any LLM, not absolute, so they are tested: [`backend/scripts/guardrail_check.py`](backend/scripts/guardrail_check.py) sends 10 tricky messages (off-topic, coding, prompt leak, role-play jailbreak, Tanglish, abuse, self-harm) and checks every reply. Run it after any prompt or model change.
+
 Deploying it: see [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## Quick start
