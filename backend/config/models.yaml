@@ -24,17 +24,21 @@
 active_profile: budget
 
 profiles:
-  # Cheapest working setup, for development while credits are low.
-  # Expect weaker Sinhala/Tamil and occasional mistakes in tool use.
+  # Cheapest reliable setup, while credits are low. Expect weaker
+  # Sinhala/Tamil than "balanced". (Groq gpt-oss-20b as primary sometimes
+  # answered without searching and invented products, so it's only a fallback.)
   budget:
     primary:
-      provider: groq
-      model: openai/gpt-oss-20b
+      provider: openai
+      model: gpt-5.4-nano
       params:
         reasoning_effort: low
+        use_responses_api: true
     fallbacks:
-      - provider: openai
-        model: gpt-4.1-nano
+      - provider: groq
+        model: openai/gpt-oss-20b
+        params:
+          reasoning_effort: low
 
   # Good quality for a sensible price. Use for real testing and demos.
   balanced:
