@@ -38,8 +38,8 @@ export function AssistantMessage({ message }: { message: ChatMessage }) {
 
         {text && (
           <div
-            className={`w-fit max-w-full rounded-2xl rounded-tl-md px-4 py-2.5 shadow-sm sm:max-w-[85%] ${
-              message.failed ? "bg-red-50 text-red-800" : "bg-white text-ink"
+            className={`w-fit max-w-full rounded-3xl rounded-tl-md px-4 py-2.5 shadow-lg shadow-brand/5 ring-1 backdrop-blur-xl sm:max-w-[85%] ${
+              message.failed ? "bg-red-50/90 text-red-800 ring-red-200" : "bg-white/80 text-ink ring-white/60"
             }`}
           >
             <Markdown

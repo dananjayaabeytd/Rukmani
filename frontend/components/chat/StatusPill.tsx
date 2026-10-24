@@ -15,10 +15,11 @@ export function StatusPill({ status }: { status: string }) {
   return (
     <div
       role="status"
-      className="flex w-fit items-center gap-2 rounded-full bg-brand-mist px-3 py-1.5 text-sm text-brand"
+      className="relative flex w-fit items-center gap-2 overflow-hidden rounded-full bg-white/80 px-3 py-1.5 text-sm text-brand shadow-md shadow-brand/10 ring-1 ring-brand-muted/30 backdrop-blur-xl"
     >
-      <LoaderCircle className="size-4 animate-spin" aria-hidden />
-      {label}…
+      <span aria-hidden className="animate-shimmer absolute inset-0" />
+      <LoaderCircle className="relative size-4 animate-spin text-brand-light" aria-hidden />
+      <span className="relative">{label}…</span>
     </div>
   );
 }

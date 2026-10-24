@@ -30,11 +30,9 @@ export function Composer({ onSend, disabled }: ComposerProps) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="border-t border-brand-muted/30 bg-white/90 backdrop-blur"
-    >
-      <div className="mx-auto flex max-w-4xl items-end gap-2 px-4 py-3">
+    // A floating pill over the particles, rather than a bar across the screen.
+    <form onSubmit={submit} className="relative px-3 pt-1 pb-3 sm:px-4 sm:pb-5">
+      <div className="mx-auto flex max-w-4xl items-end gap-2 rounded-3xl bg-white/85 p-1.5 pl-2 shadow-xl shadow-brand/10 ring-1 ring-brand-muted/30 backdrop-blur-xl transition focus-within:ring-2 focus-within:ring-brand/40">
         <textarea
           value={text}
           onChange={(event) => setText(event.target.value)}
@@ -43,13 +41,13 @@ export function Composer({ onSend, disabled }: ComposerProps) {
           maxLength={2000}
           placeholder={t.placeholder}
           aria-label={t.messageLabel}
-          className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none rounded-2xl border border-brand-muted/50 bg-brand-tint px-4 py-2.5 text-ink outline-none placeholder:text-ink-soft/60 focus:border-brand focus:ring-2 focus:ring-brand/20"
+          className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-ink outline-none placeholder:text-ink-soft/60"
         />
         <button
           type="submit"
           disabled={!canSend}
           aria-label={t.send}
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sun text-brand shadow-sm transition hover:brightness-95 disabled:bg-brand-mist disabled:text-brand-muted"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-sun to-gold text-brand shadow-md shadow-gold/30 transition hover:scale-105 active:scale-95 disabled:scale-100 disabled:from-brand-mist disabled:to-brand-mist disabled:text-brand-muted disabled:shadow-none"
         >
           <SendHorizontal className="size-5" aria-hidden />
         </button>

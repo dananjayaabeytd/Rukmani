@@ -34,16 +34,16 @@ export function ChatListItem({ chat, active, onSelect, onRename, onDelete }: Cha
 
   if (mode === "rename") {
     return (
-      <form onSubmit={saveTitle} className="flex items-center gap-1 rounded-xl bg-white p-1.5 ring-1 ring-brand">
+      <form onSubmit={saveTitle} className="flex items-center gap-1 rounded-xl bg-white/10 p-1.5 ring-1 ring-sun">
         <input
           autoFocus
           value={title}
           maxLength={80}
           onChange={(event) => setTitle(event.target.value)}
           aria-label={t.renameChat}
-          className="min-w-0 flex-1 bg-transparent px-1.5 text-sm text-ink outline-none"
+          className="min-w-0 flex-1 bg-transparent px-1.5 text-sm text-white outline-none"
         />
-        <button type="submit" aria-label={t.save} className="rounded-lg p-1 text-success hover:bg-brand-mist">
+        <button type="submit" aria-label={t.save} className="rounded-lg p-1 text-sun hover:bg-white/10">
           <Check className="size-4" aria-hidden />
         </button>
         <button
@@ -53,7 +53,7 @@ export function ChatListItem({ chat, active, onSelect, onRename, onDelete }: Cha
             setTitle(chat.title);
             setMode("view");
           }}
-          className="rounded-lg p-1 text-ink-soft hover:bg-brand-mist"
+          className="rounded-lg p-1 text-white/70 hover:bg-white/10"
         >
           <X className="size-4" aria-hidden />
         </button>
@@ -63,12 +63,12 @@ export function ChatListItem({ chat, active, onSelect, onRename, onDelete }: Cha
 
   if (mode === "confirmDelete") {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">
+      <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-red-800 shadow-md">
         <span className="flex-1">{t.confirmDelete}</span>
         <button type="button" onClick={onDelete} className="rounded-lg bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
           {t.yes}
         </button>
-        <button type="button" onClick={() => setMode("view")} className="rounded-lg px-2 py-0.5 text-xs font-semibold">
+        <button type="button" onClick={() => setMode("view")} className="rounded-lg px-2 py-0.5 text-xs font-semibold text-ink">
           {t.no}
         </button>
       </div>
@@ -77,10 +77,12 @@ export function ChatListItem({ chat, active, onSelect, onRename, onDelete }: Cha
 
   return (
     <div
-      className={`group flex items-center rounded-xl transition ${
-        active ? "bg-brand text-white" : "text-ink hover:bg-brand-mist"
+      className={`group relative flex items-center rounded-xl transition ${
+        active ? "bg-white/15 text-white shadow-inner" : "text-white/75 hover:bg-white/10 hover:text-white"
       }`}
     >
+      {/* The open chat gets a small yellow marker, like the smile in Kapruka's logo. */}
+      {active && <span aria-hidden className="absolute inset-y-2 left-0 w-1 rounded-full bg-sun" />}
       <button
         type="button"
         onClick={onSelect}
@@ -95,7 +97,7 @@ export function ChatListItem({ chat, active, onSelect, onRename, onDelete }: Cha
           type="button"
           onClick={() => setMode("rename")}
           aria-label={t.renameChat}
-          className={`rounded-lg p-1.5 ${active ? "hover:bg-white/15" : "hover:bg-white"}`}
+          className="rounded-lg p-1.5 hover:bg-white/15"
         >
           <Pencil className="size-3.5" aria-hidden />
         </button>
@@ -103,7 +105,7 @@ export function ChatListItem({ chat, active, onSelect, onRename, onDelete }: Cha
           type="button"
           onClick={() => setMode("confirmDelete")}
           aria-label={t.deleteChat}
-          className={`rounded-lg p-1.5 ${active ? "hover:bg-white/15" : "hover:bg-white"}`}
+          className="rounded-lg p-1.5 hover:bg-white/15"
         >
           <Trash2 className="size-3.5" aria-hidden />
         </button>

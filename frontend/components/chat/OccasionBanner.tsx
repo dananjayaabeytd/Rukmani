@@ -26,7 +26,7 @@ export function OccasionBanner({ onPick }: { onPick: (message: string) => void }
   if (!occasion) return null;
 
   return (
-    <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl bg-brand px-4 py-3 text-sm text-white shadow-md">
+    <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl bg-linear-to-r from-brand-deep via-brand to-brand-light px-4 py-3 text-sm text-white shadow-lg shadow-brand/25">
       <span className="flex items-center gap-2">
         <span aria-hidden className="text-lg">{occasion.emoji}</span>
         {occasion.daysAway === 0

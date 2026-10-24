@@ -25,7 +25,7 @@ export function MessageList({ messages, summary }: MessageListProps) {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6">
       {summary && (
-        <aside className="flex gap-2 rounded-2xl border border-dashed border-brand-muted/50 bg-white/60 px-4 py-3 text-sm text-ink-soft">
+        <aside className="flex gap-2 rounded-2xl border border-dashed border-brand-muted/50 bg-white/60 px-4 py-3 text-sm text-ink-soft backdrop-blur-xl">
           <History className="mt-0.5 size-4 shrink-0 text-brand-muted" aria-hidden />
           <p>
             <span className="font-medium text-brand">{t.earlierInChat}: </span>
