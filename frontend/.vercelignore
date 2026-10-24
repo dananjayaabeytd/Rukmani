@@ -1,0 +1,5 @@
+# Not uploaded to Vercel: local settings and build output.
+# The production API URL is set as a Vercel environment variable instead.
+.env.local
+.next/
+node_modules/

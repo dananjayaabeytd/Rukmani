@@ -76,4 +76,4 @@ Dependencies point one way only: `api → agent → kapruka`.
 
 ## Deploy
 
-`Dockerfile` + `railway.json` are ready — see [`../DEPLOYMENT.md`](../DEPLOYMENT.md). Optional error alerts: set `SENTRY_DSN`.
+`Dockerfile` is ready; it runs on Google Cloud Run — see [`../DEPLOYMENT.md`](../DEPLOYMENT.md). Optional error alerts: set `SENTRY_DSN`.

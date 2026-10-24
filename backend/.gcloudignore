@@ -1,0 +1,11 @@
+# Files NOT uploaded when deploying with `gcloud run deploy --source .`
+# Secrets come from Secret Manager, never from this folder.
+.gcloudignore
+.env
+.venv/
+data/
+tests/
+scripts/
+.pytest_cache/
+.ruff_cache/
+**/__pycache__/

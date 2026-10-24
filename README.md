@@ -9,6 +9,10 @@
   built on the public <a href="https://mcp.kapruka.com">Kapruka MCP</a>.
 </p>
 
+<p align="center">
+  <strong>Try it live: <a href="https://rukmani.vercel.app">rukmani.vercel.app</a></strong>
+</p>
+
 ---
 
 ## What it is
