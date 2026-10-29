@@ -112,6 +112,10 @@ npm run dev
 
 **dananjayaabeytd** · dananjayaabeytd@gmail.com
 
+## License
+
+The code is released under the [MIT License](LICENSE). Kapruka's name, logo and catalogue are not covered by it (see below).
+
 ---
 
 <sub>Kapruka, the Kapruka logo and the Kapruka catalogue belong to Kapruka Holdings PLC. This is an independent challenge entry built on Kapruka's public MCP.</sub>
